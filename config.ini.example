@@ -1,0 +1,19 @@
+[authentication]
+github_token = YOUR_GITHUB_TOKEN_HERE
+github_username = YOUR_GITHUB_USERNAME
+
+[repository]
+default_repo_name = your-repo-name
+default_repo_owner = YOUR_GITHUB_USERNAME
+default_branch = main
+default_private = false
+
+[options]
+auto_commit = true
+commit_message_prefix = [Auto]
+dry_run = false
+verbose = true
+batch_size = 100
+
+[ignore]
+patterns = node_modules,.env,.replit,.config,dist,build,.git,.cache,.next,.vercel,.turbo,coverage,.nyc_output,tmp,temp,*.log,.DS_Store,attached_assets,config.ini

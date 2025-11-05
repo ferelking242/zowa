@@ -1,160 +1,189 @@
-# TempMail Pro
+# 🚀 GitHub API - Universal Tool
 
-Application de messagerie temporaire avec validation automatique de liens et bot Telegram intégré.
+API universelle et réutilisable pour gérer les opérations GitHub depuis n'importe quel projet.
 
-## 🚀 Fonctionnalités
-
-- 📧 Génération d'emails temporaires
-- 📬 Réception et consultation de messages
-- 🔗 Validation automatique de liens (Firebase, Replit, etc.)
-- 🤖 Bot Telegram avec auto-refresh toutes les 5 secondes
-- 🌐 Interface web moderne avec React + Vite
-- 🗄️ Base de données Supabase PostgreSQL
-- 🎭 Automation avec Playwright (mode stealth)
-
-## 📁 Structure du Projet
+## 📁 Structure
 
 ```
-├── client/               # Frontend React
-│   ├── src/
-│   │   ├── components/   # Composants UI
-│   │   ├── pages/        # Pages de l'app
-│   │   └── lib/          # Utilitaires
-│   └── index.html
-│
-├── server/               # Backend Express.js
-│   ├── bot/              # Bot Telegram (module isolé)
-│   ├── services/         # Services métier
-│   ├── lib/              # Utilitaires backend
-│   ├── index.ts          # Point d'entrée
-│   └── routes.ts         # Routes API
-│
-└── shared/               # Types partagés
-    └── schema.ts         # Schémas Zod
+Dev/GitHub api/
+├── config.ini         # Configuration (token, repo, options)
+├── config.ts          # Gestionnaire de configuration
+├── githubClient.ts    # Client API GitHub
+├── operations.ts      # Opérations haut niveau
+├── syncProject.ts     # Synchronisation de projets
+├── cli.ts            # Interface en ligne de commande
+└── README.md         # Cette documentation
 ```
 
-## 🛠️ Installation Locale
+## ⚙️ Configuration
+
+### Méthode 1 : Fichier .env (RECOMMANDÉ)
+
+L'API lit automatiquement le fichier `.env` à la racine du projet et remplit le `config.ini` avec les valeurs trouvées.
+
+**Ajoutez ces variables dans votre `.env` :**
 
 ```bash
-# Installer les dépendances
-npm install
-
-# Copier le fichier d'environnement
-cp .env.example .env
-
-# Configurer les variables d'environnement dans .env
-
-# Lancer en développement
-npm run dev
+# GitHub API Configuration
+GITHUB_TOKEN=ghp_votre_token_ici
+GITHUB_USERNAME=votre-username
+GITHUB_REPO_NAME=nom-du-repo
+GITHUB_REPO_OWNER=proprietaire-du-repo
+GITHUB_BRANCH=main
 ```
 
-## 🌍 Déploiement sur Railway
-
-Railway peut héberger **à la fois le site web ET le bot Telegram** sur la même instance.
-
-### Étapes de déploiement:
-
-1. **Créer un nouveau projet sur Railway**
-   - Connectez votre repo GitHub
-   - Railway détectera automatiquement le `package.json`
-
-2. **Configurer les variables d'environnement** dans Railway:
-
-```env
-# Supabase (Obligatoire)
-SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-DATABASE_URL=postgresql://postgres:[PASSWORD]@db.xxx.supabase.co:5432/postgres
-
-# API Configuration
-API_BASE_URL=https://your-app.railway.app
-VITE_API_BASE_URL=https://your-app.railway.app
-
-# Session
-SESSION_SECRET=your_secure_random_string
-
-# Email Service
-EMAIL_SERVICE_DOMAIN=antdev.org
-
-# Telegram Bot (Optionnel - obtenir depuis @BotFather)
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-
-# Playwright
-PLAYWRIGHT_HEADLESS=true
-PLAYWRIGHT_TIMEOUT=30000
-
-# Node
-NODE_ENV=production
-PORT=5000
-```
-
-3. **Déployer**
-   - Railway build automatiquement avec: `npm run build`
-   - Lance le serveur avec: `npm start`
-   - Le site ET le bot seront actifs simultanément ✅
-
-### ⚙️ Configuration du Bot Telegram
-
-1. Créer un bot via [@BotFather](https://t.me/botfather) sur Telegram
-2. Copier le token fourni
-3. Ajouter `TELEGRAM_BOT_TOKEN` dans les variables d'environnement Railway
-4. Le bot se lance automatiquement avec le serveur
-
-**Note**: Si aucun token n'est fourni, le bot se désactive automatiquement sans affecter le site web.
-
-## 📦 Scripts Disponibles
+**Puis exécutez simplement l'API :**
 
 ```bash
-npm run dev      # Développement local
-npm run build    # Build production (frontend + backend)
-npm start        # Lancer en production
-npm run check    # Vérification TypeScript
+npx tsx Dev/GitHub\ api/cli.ts sync
 ```
 
-## 🔧 Technologies Utilisées
+L'API va :
+1. ✅ Lire le `.env`
+2. ✅ Remplir automatiquement le `config.ini` avec ces valeurs
+3. ✅ Utiliser le `config.ini` pour les opérations GitHub
 
-### Frontend
-- React 18
-- Vite
-- TanStack Query
-- Tailwind CSS
-- shadcn/ui
-- Wouter (routing)
+### Méthode 2 : Fichier config.ini
 
-### Backend
-- Express.js
-- TypeScript
-- Supabase (PostgreSQL)
-- Playwright (automation)
-- Telegraf (bot Telegram)
-- Zod (validation)
+Éditez `config.ini` pour configurer l'API :
 
-## 📝 Variables d'Environnement
+```ini
+[authentication]
+github_token = YOUR_GITHUB_TOKEN_HERE  # Ou utilisez la variable d'environnement GITHUB_TOKEN
+github_username = YOUR_GITHUB_USERNAME
 
-Consultez `.env.example` pour la liste complète des variables requises.
+[repository]
+default_repo_name = your-repo-name
+default_repo_owner = YOUR_GITHUB_USERNAME
+default_branch = main
+default_private = false
 
-### Variables Obligatoires:
-- `SUPABASE_URL` et clés Supabase
-- `DATABASE_URL` (connection string PostgreSQL)
-- `SESSION_SECRET` (pour les sessions Express)
+[options]
+auto_commit = true
+commit_message_prefix = [Auto]
+dry_run = false
+verbose = true
+batch_size = 100
 
-### Variables Optionnelles:
-- `TELEGRAM_BOT_TOKEN` (pour activer le bot)
-- `CAPTCHA_API_KEY` (pour résolution automatique de CAPTCHA)
+[ignore]
+patterns = node_modules,.env,.replit,.config,dist,build,.git,.cache,.next,.vercel,.turbo,coverage,.nyc_output,tmp,temp,*.log,.DS_Store,attached_assets
+```
 
-## 🚨 Notes de Sécurité
+⚠️ **IMPORTANT** : Ne committez JAMAIS votre vrai token GitHub dans config.ini ! Utilisez toujours des variables d'environnement ou un fichier `.env` local.
 
-- Ne jamais commiter le fichier `.env`
-- Générer un `SESSION_SECRET` fort et unique
-- Utiliser les clés Supabase appropriées (service role pour le backend)
-- Activer Row Level Security (RLS) sur Supabase
+## 🔧 Utilisation
 
-## 📄 Licence
+### 1. Via CLI (Ligne de commande)
 
-MIT
+```bash
+# Synchroniser le projet actuel
+npx tsx Dev/GitHub\ api/cli.ts sync
 
-## 👨‍💻 Support
+# Synchroniser un dossier spécifique
+npx tsx Dev/GitHub\ api/cli.ts sync /path/to/project "Mon message de commit"
 
-Pour toute question, consultez la documentation ou créez une issue sur GitHub.
+# Créer un nouveau repo
+npx tsx Dev/GitHub\ api/cli.ts create-repo mon-nouveau-repo
+
+# Mettre à jour un fichier
+npx tsx Dev/GitHub\ api/cli.ts update-file README.md "Nouveau contenu"
+
+# Afficher l'aide
+npx tsx Dev/GitHub\ api/cli.ts help
+```
+
+### 2. Via Import TypeScript
+
+```typescript
+import { ConfigManager } from './Dev/GitHub api/config';
+import { GitHubClient } from './Dev/GitHub api/githubClient';
+import { GitHubOperations } from './Dev/GitHub api/operations';
+import { ProjectSync } from './Dev/GitHub api/syncProject';
+
+// Initialiser
+const config = new ConfigManager();
+const client = new GitHubClient(config);
+const operations = new GitHubOperations(client, config);
+const sync = new ProjectSync(operations, config);
+
+// Créer un repo
+await operations.ensureRepo('mon-repo');
+
+// Pousser des fichiers
+await operations.pushFiles([
+  { path: 'README.md', content: '# Hello' },
+  { path: 'src/index.ts', content: 'console.log("Hi")' }
+], 'Initial commit');
+
+// Synchroniser un projet
+await sync.syncDirectory('/path/to/project', 'Sync project');
+
+// Mettre à jour un fichier
+await operations.updateFile('README.md', '# Updated', 'Update README');
+```
+
+### 3. Utilisation par d'autres agents
+
+Les autres agents peuvent utiliser cette API sans créer de nouveaux fichiers :
+
+1. **Modifier `config.ini`** avec leurs paramètres
+2. **Exécuter** : `npx tsx Dev/GitHub\ api/cli.ts sync`
+3. **C'est tout !** 🎉
+
+## 🎯 Fonctionnalités
+
+- ✅ **Création de repos** GitHub
+- ✅ **Push de fichiers** multiples en un commit
+- ✅ **Mise à jour** de fichiers individuels
+- ✅ **Synchronisation** de projets entiers
+- ✅ **Gestion automatique** des blobs, trees, commits
+- ✅ **Support binaire** (images, fonts, etc.)
+- ✅ **Filtrage** de fichiers via patterns
+- ✅ **Mode dry-run** pour tester
+- ✅ **Logs verbeux** optionnels
+- ✅ **Configuration centralisée** via config.ini
+
+## 🔒 Sécurité
+
+- Le token GitHub n'est **jamais loggé**
+- Support des variables d'environnement : `GITHUB_TOKEN` (override config.ini)
+- Validation de la configuration au démarrage
+
+## 📝 Exemples
+
+### Push du projet actuel vers GitHub
+
+```bash
+npx tsx Dev/GitHub\ api/cli.ts sync . "Initial commit"
+```
+
+### Créer un nouveau repo et pusher
+
+```typescript
+const result = await operations.ensureRepo('nouveau-projet');
+await sync.syncDirectory('./mon-projet', 'Premier commit');
+```
+
+### Mettre à jour la configuration d'un autre projet
+
+```ini
+# Modifier config.ini
+[repository]
+default_repo_name = autre-projet
+default_repo_owner = autre-user
+
+# Puis exécuter
+npx tsx Dev/GitHub\ api/cli.ts sync
+```
+
+## 🚀 Déploiement
+
+Cette API est **universelle** et peut être :
+- Copiée dans n'importe quel projet
+- Utilisée par n'importe quel agent
+- Configurée via `config.ini` sans modification de code
+
+## 📞 Support
+
+Pour toute question ou problème, consultez la documentation GitHub API :
+https://docs.github.com/en/rest
