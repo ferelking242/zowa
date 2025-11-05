@@ -9,6 +9,9 @@ vite.config.ts.*
 .env
 .env.local
 
+# GitHub API config (contains secrets from .env)
+Dev/GitHub api/config.ini
+
 # Browser data - cookies and profiles for anti-detection
 .browser-data/
 *.cookies.json
