@@ -1,0 +1,216 @@
+{
+  "header": {
+    "title": "TempMail Pro",
+    "subtitle": "Service d'Email Temporaire",
+    "autoRefresh": "Rafraîchissement auto"
+  },
+  "hero": {
+    "title": "Adresse Email Jetable",
+    "description": "Générez instantanément des adresses email temporaires. Parfait pour les tests, les inscriptions et la protection de votre vie privée."
+  },
+  "emailGenerator": {
+    "yourEmail": "Votre Email Temporaire",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "generateNew": "Générer Nouveau",
+    "clearInbox": "Vider la Boîte",
+    "messages": "Messages",
+    "validated": "Validés",
+    "active": "Actif",
+    "paused": "En pause",
+    "autoRefresh": "Rafraîchissement auto",
+    "on": "ACTIVÉ",
+    "off": "DÉSACTIVÉ",
+    "activeBrowsers": "Navigateurs actifs",
+    "customEmail": "Utiliser un Email Spécifique",
+    "enterUsername": "Entrez le nom d'utilisateur (ex: faststar86)",
+    "checkAvailability": "Utiliser cet Email",
+    "checkAvailabilityShort": "Utiliser",
+    "emailSet": "Email changé avec succès",
+    "emailSetFailed": "Échec de la définition de l'email personnalisé",
+    "cancel": "Annuler",
+    "howItWorks": "Comment ça marche",
+    "howItWorksDesc": "Les emails sont automatiquement vérifiés toutes les {{interval}} secondes. Les liens dans les messages sont validés automatiquement par notre service backend."
+  },
+  "inbox": {
+    "title": "Boîte de Réception",
+    "empty": "Votre boîte de réception est vide",
+    "emptyDesc": "Les messages apparaîtront ici automatiquement à réception",
+    "refresh": "Actualiser",
+    "from": "De",
+    "expiresIn": "Expire dans",
+    "ago": "il y a",
+    "justNow": "À l'instant",
+    "noContent": "Aucun contenu disponible",
+    "backendStatus": "Statut Backend"
+  },
+  "validation": {
+    "verified": "Vérifié",
+    "processing": "Traitement",
+    "failed": "Échec",
+    "firebaseDetected": "Lien Firebase Détecté",
+    "autoValidated": "Auto-validé",
+    "autoVerified": "Email vérifié automatiquement via REST API",
+    "playwrightValidating": "Validation Playwright...",
+    "playwrightValidated": "Validé par Playwright",
+    "headlessBrowser": "Navigateur Headless",
+    "validating": "Validation...",
+    "validated": "Validé",
+    "clickToVerify": "Cliquer pour vérifier",
+    "defaultProvider": "Service",
+    "types": {
+      "verification": "Vérification",
+      "reset": "Réinitialisation",
+      "confirmation": "Confirmation",
+      "action": "Action",
+      "unknown": "Lien"
+    }
+  },
+  "features": {
+    "title": "Pourquoi Choisir TempMail Pro ?",
+    "instant": {
+      "title": "Génération Email Instantanée",
+      "description": "Créez des adresses email temporaires en quelques secondes. Aucune inscription requise. Parfait pour les inscriptions rapides et les tests."
+    },
+    "autoValidation": {
+      "title": "Validation Auto des Liens",
+      "description": "Les liens dans les emails sont automatiquement validés. Les liens de vérification Firebase sont traités instantanément via l'API REST."
+    },
+    "realtime": {
+      "title": "Mises à Jour en Temps Réel",
+      "description": "Les messages apparaissent automatiquement avec une interrogation de {{interval}} secondes. Pas besoin de rafraîchir manuellement. Toujours à jour."
+    }
+  },
+  "footer": {
+    "copyright": "© 2024 TempMail Pro. Tous droits réservés."
+  },
+  "toast": {
+    "emailCopied": "Email copié",
+    "emailCopiedDesc": "L'adresse email a été copiée dans le presse-papier.",
+    "copyFailed": "Copie échouée",
+    "copyFailedDesc": "Échec de la copie de l'adresse email. Veuillez réessayer.",
+    "newEmailGenerated": "Nouvel email généré",
+    "newEmailGeneratedDesc": "Votre nouvelle adresse email : {{email}}",
+    "inboxCleared": "Boîte vidée",
+    "inboxClearedDesc": "Tous les messages ont été supprimés.",
+    "clearFailed": "Vidage échoué",
+    "clearFailedDesc": "Échec du vidage de la boîte. Veuillez réessayer.",
+    "messageDeleted": "Message supprimé",
+    "messageDeletedDesc": "Le message a été supprimé avec succès.",
+    "deleteFailed": "Suppression échouée",
+    "deleteFailedDesc": "Échec de la suppression du message. Veuillez réessayer.",
+    "linkValidationStarted": "Lien de validation détecté !",
+    "linkValidationStartedDesc": "Nous avons trouvé un lien de validation dans votre email. Il est en cours de validation automatique.",
+    "linkValidationSuccess": "Lien validé !",
+    "linkValidationSuccessDesc": "Le lien de validation a été traité avec succès ({{provider}})",
+    "linkValidationFailed": "Validation échouée",
+    "linkValidationFailedDesc": "Le lien de validation n'a pas pu être traité. Veuillez essayer manuellement.",
+    "newMessageReceived": "Nouvel email reçu !",
+    "newMessageReceivedDesc": "De {{from}} - {{subject}}",
+    "refreshing": "Actualisation",
+    "refreshingDesc": "Vérification des nouveaux messages..."
+  },
+  "notifications": {
+    "newEmail": "📧 Nouvel email reçu",
+    "from": "De",
+    "emailFrom": "Email de {{provider}}",
+    "type": "Type"
+  },
+  "pages": {
+    "settings": {
+      "title": "Paramètres",
+      "subtitle": "Personnalisez votre expérience"
+    },
+    "help": {
+      "title": "Aide & Raccourcis",
+      "subtitle": "Guide des raccourcis clavier et gestes tactiles"
+    },
+    "apiDocs": {
+      "title": "Documentation API",
+      "subtitle": "Guide complet de l'API TempMail"
+    },
+    "playwrightTest": {
+      "title": "Test Playwright",
+      "subtitle": "Vérification de validation d'email avec browser automation",
+      "urlPlaceholder": "https://example.com/verify?token=..."
+    },
+    "history": {
+      "title": "Historique",
+      "subtitle": "Consultez l'arbre de vos emails générés et leurs messages",
+      "searchPlaceholder": "Rechercher un email...",
+      "filterPlaceholder": "Filtrer par nombre de messages"
+    }
+  },
+  "ui": {
+    "toggleSidebar": "Basculer la barre latérale"
+  },
+  "automation": {
+    "title": "Automatisation de Comptes",
+    "subtitle": "Créez automatiquement des comptes avec Playwright",
+    "selectProvider": "Sélectionner un Service",
+    "selectProviderDesc": "Choisissez le service pour créer un compte",
+    "email": "Email",
+    "startAutomation": "Démarrer l'Automatisation",
+    "noActiveTask": "Aucune tâche active",
+    "status": {
+      "title": "Statut",
+      "description": "Progression de l'automatisation en cours",
+      "pending": "En attente",
+      "running": "En cours",
+      "completed": "Terminé",
+      "failed": "Échoué"
+    },
+    "logs": {
+      "title": "Logs"
+    },
+    "errors": {
+      "title": "Erreurs"
+    },
+    "screenshots": {
+      "title": "Captures d'écran",
+      "description": "Captures d'écran prises pendant le processus",
+      "screenshot": "Capture d'écran"
+    },
+    "history": {
+      "title": "Historique",
+      "description": "Historique des automatisations récentes"
+    }
+  },
+  "telegram": {
+    "welcome": "👋 Bienvenue sur TempMail Pro Bot!\n\nJe peux vous aider à gérer vos emails temporaires.\n\n🔑 Connectez-vous avec /login pour accéder à vos emails\n📧 Créez un compte avec /register si vous n'en avez pas\n🌍 Changez la langue avec /language",
+    "loginPrompt": "📧 Veuillez entrer votre email:",
+    "passwordPrompt": "🔑 Veuillez entrer votre mot de passe:",
+    "registerStep1": "📝 Inscription - Étape 1/3\n\nEntrez votre email:",
+    "registerStep2": "📝 Inscription - Étape 2/3\n\nEntrez votre nom d'utilisateur (lettres uniquement, pas de chiffres):",
+    "registerStep3": "📝 Inscription - Étape 3/3\n\nEntrez votre mot de passe (minimum 8 caractères):",
+    "languageChanged": "✅ Langue changée en Français",
+    "loginSuccess": "✅ Connexion réussie!\n\nBienvenue {{username}}!",
+    "loginFailed": "❌ Email ou mot de passe incorrect. Utilisez /login pour réessayer.",
+    "registerSuccess": "🎉 Inscription réussie!\n\nBienvenue {{username}}!\n\nVotre email principal: {{email}}",
+    "registerFailed": "❌ Erreur lors de l'inscription: {{error}}",
+    "logoutSuccess": "👋 Vous avez été déconnecté avec succès!",
+    "notLoggedIn": "🔒 Vous devez être connecté pour accéder à votre inbox.\n\nUtilisez /login pour vous connecter.",
+    "inboxTitle": "📬 Inbox de {{username}}\n\n Email principal: {{email}}\nEmails disponibles: {{username}}0@antdev.org - {{username}}1000000@antdev.org\n\n📊 Emails actifs: {{count}}",
+    "noMessages": "📭 Aucun message pour {{email}}",
+    "messagesTitle": "📧 Messages pour {{email}}\n\n",
+    "emailNumberPrompt": "🔢 Entrez le numéro pour votre nouvel email (0-1000000):",
+    "invalidNumber": "❌ Numéro invalide. Doit être entre 0 et 1000000.",
+    "emailCreated": "✅ Email {{email}} créé avec succès!",
+    "invalidUsername": "❌ Le nom d'utilisateur doit contenir 3-20 lettres (pas de chiffres).",
+    "usernameTaken": "❌ Ce nom d'utilisateur est déjà pris.",
+    "invalidPassword": "❌ Le mot de passe doit contenir au moins 8 caractères.",
+    "newMessageNotification": "📧 Nouveau message reçu!\n\n📨 De: {{from}}\n📝 Sujet: {{subject}}\n📬 Email: {{email}}",
+    "buttons": {
+      "login": "🔑 Connexion",
+      "register": "📝 Inscription",
+      "inbox": "📬 Inbox",
+      "refresh": "🔄 Actualiser",
+      "settings": "⚙️ Paramètres",
+      "profile": "👤 Profil",
+      "language": "🌍 Langue",
+      "createEmail": "➕ Créer Email",
+      "back": "⬅️ Retour",
+      "automation": "🤖 Automatisation"
+    }
+  }
+}
