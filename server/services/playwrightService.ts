@@ -185,6 +185,54 @@ export class PlaywrightService {
   async cleanup(): Promise<void> {
     this.activeValidations = 0;
   }
+
+  async healthCheck(): Promise<{
+    isWorking: boolean;
+    message: string;
+    browserVersion?: string;
+  }> {
+    let browser: Browser | null = null;
+    
+    try {
+      console.log('🏥 [PLAYWRIGHT] Starting health check...');
+      
+      browser = await chromium.launch({ 
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-blink-features=AutomationControlled',
+        ],
+        timeout: 10000
+      });
+      
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      
+      await page.goto('about:blank', { timeout: 5000 });
+      const browserVersion = await browser.version();
+      
+      await page.close();
+      await context.close();
+      
+      console.log('✅ [PLAYWRIGHT] Health check passed!');
+      return {
+        isWorking: true,
+        message: 'Playwright is working correctly',
+        browserVersion
+      };
+    } catch (error: any) {
+      console.error('❌ [PLAYWRIGHT] Health check failed:', error.message);
+      return {
+        isWorking: false,
+        message: `Playwright error: ${error.message}`
+      };
+    } finally {
+      if (browser) {
+        await browser.close().catch(() => {});
+      }
+    }
+  }
 }
 
 export const playwrightService = new PlaywrightService();

@@ -110,8 +110,51 @@ export class EmailService {
     }
     
     const uniqueLinks = Array.from(new Set(links));
+    
+    // Filter to keep only VALIDATION links (with oobCode and mode=verify/verifyEmail)
+    const validationLinks = uniqueLinks.filter(url => this.isValidationLink(url));
+    
     console.log('🔗 [LINK EXTRACTION] Total unique links:', uniqueLinks.length);
-    return uniqueLinks;
+    console.log('✅ [LINK EXTRACTION] Validation links only:', validationLinks.length);
+    
+    return validationLinks;
+  }
+  
+  private isValidationLink(url: string): boolean {
+    try {
+      const decodedUrl = url
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      
+      const urlObj = new URL(decodedUrl);
+      const params = urlObj.searchParams;
+      const path = urlObj.pathname.toLowerCase();
+      
+      // Must have oobCode (Firebase/Google style verification)
+      const hasOobCode = params.has('oobCode');
+      
+      // Must have mode=verify or mode=verifyEmail OR path contains verify/confirm/activate
+      const mode = params.get('mode') || '';
+      const hasVerifyMode = mode.includes('verify') || mode.includes('Verify');
+      const hasVerifyPath = path.includes('verify') || path.includes('confirm') || path.includes('activate') || path.includes('action-code');
+      
+      // Exclude tracking links (email.mg, tracking, unsubscribe, account settings)
+      const isTrackingLink = urlObj.hostname.includes('email.mg') || 
+                            path.includes('/o/') || 
+                            path.includes('unsubscribe') || 
+                            path.includes('/account') ||
+                            path.includes('settings') ||
+                            path.includes('preferences');
+      
+      // Validation link: has oobCode AND (verify mode OR verify path) AND NOT a tracking link
+      return (hasOobCode && (hasVerifyMode || hasVerifyPath) && !isTrackingLink) || 
+             (!hasOobCode && hasVerifyPath && !isTrackingLink);
+    } catch {
+      return false;
+    }
   }
 
   private extractLinksFromHtml(html: string): string[] {

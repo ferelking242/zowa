@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { telegramService } from "./bot";
+import { keepAliveService } from "./services/keepAliveService";
 
 const app = express();
 
@@ -85,4 +86,7 @@ app.use((req, res, next) => {
   telegramService.start().catch((error) => {
     console.error('Failed to start Telegram bot:', error);
   });
+
+  // Start keep-alive service (for Render deployments)
+  keepAliveService.start();
 })();

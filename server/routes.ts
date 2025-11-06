@@ -29,6 +29,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })
   );
 
+  // Health check endpoint for keep-alive service
+  app.get("/api/health", (_req, res) => {
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  });
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {

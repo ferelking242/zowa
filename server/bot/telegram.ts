@@ -3,6 +3,8 @@ import { message } from 'telegraf/filters';
 import { storage } from '../services/supabaseStorage';
 import { emailService } from '../services/emailService';
 import { accountAutomationService } from '../services/accountAutomationService';
+import { playwrightService } from '../services/playwrightService';
+import { linkValidationService } from '../services/linkValidationService';
 import type { User } from '@shared/schema';
 import axios from 'axios';
 
@@ -205,6 +207,10 @@ class TelegramBotService {
 
     this.bot.command('automation', async (ctx) => {
       await this.showAutomation(ctx);
+    });
+
+    this.bot.command('status', async (ctx) => {
+      await this.showSystemStatus(ctx);
     });
   }
 
@@ -824,25 +830,24 @@ class TelegramBotService {
     const links = emailService.extractLinksFromMessage(message);
     let linksSection = '';
     if (links.length > 0) {
-      const replitLinks = links.filter(link => link.includes('replit.com') || link.includes('repl.it'));
-      const otherLinks = links.filter(link => !link.includes('replit.com') && !link.includes('repl.it'));
+      // Filtrer seulement les vrais liens de vérification Replit (action-code?mode=verifyEmail)
+      const replitVerificationLinks = links.filter(link => 
+        (link.includes('replit.com') || link.includes('repl.it')) && 
+        link.includes('action-code') && 
+        link.includes('mode=verifyEmail')
+      );
+      const otherLinks = links.filter(link => 
+        !(link.includes('replit.com') || link.includes('repl.it')) ||
+        (!link.includes('action-code') || !link.includes('mode=verifyEmail'))
+      );
       
       linksSection = '\n\n━━━━━━━━━━━━━━━\n';
       
-      if (replitLinks.length > 0) {
+      if (replitVerificationLinks.length > 0) {
         linksSection += (lang === 'fr' ? '<b>🔗 Liens Replit:</b>' : '<b>🔗 Replit Links:</b>') + '\n';
-        replitLinks.forEach((link, index) => {
+        replitVerificationLinks.forEach((link, index) => {
           const linkText = link.length > 45 ? link.substring(0, 42) + '...' : link;
           linksSection += `  🟠 <a href="${link}">${linkText}</a>\n`;
-        });
-      }
-      
-      if (otherLinks.length > 0) {
-        if (replitLinks.length > 0) linksSection += '\n';
-        linksSection += (lang === 'fr' ? '<b>🔗 Autres liens:</b>' : '<b>🔗 Other links:</b>') + '\n';
-        otherLinks.forEach((link, index) => {
-          const linkText = link.length > 45 ? link.substring(0, 42) + '...' : link;
-          linksSection += `  🔵 <a href="${link}">${linkText}</a>\n`;
         });
       }
     }
@@ -1238,12 +1243,17 @@ class TelegramBotService {
       await ctx.reply(formattedMessage, { parse_mode: 'HTML' });
       
       const validationLinks = emailService.extractLinksFromMessage(fullMessage);
-      const replitLinks = validationLinks.filter(link => link.includes('replit.com') || link.includes('repl.it'));
+      // Filtrer seulement les vrais liens de vérification Replit
+      const replitVerificationLinks = validationLinks.filter(link => 
+        (link.includes('replit.com') || link.includes('repl.it')) && 
+        link.includes('action-code') && 
+        link.includes('mode=verifyEmail')
+      );
       
-      if (replitLinks.length > 0) {
+      if (replitVerificationLinks.length > 0) {
         const autoValidateMsg = lang === 'fr'
-          ? `🟠 ${replitLinks.length} lien(s) Replit détecté(s) - Auto-validation en cours...`
-          : `🟠 ${replitLinks.length} Replit link(s) detected - Auto-validation in progress...`;
+          ? `🟠 ${replitVerificationLinks.length} lien(s) Replit détecté(s) - Auto-validation en cours...`
+          : `🟠 ${replitVerificationLinks.length} Replit link(s) detected - Auto-validation in progress...`;
         await ctx.reply(autoValidateMsg);
         
         try {
@@ -1261,11 +1271,6 @@ class TelegramBotService {
             : `⚠️ Error during auto-validation`;
           await ctx.reply(errorMsg);
         }
-      } else if (validationLinks.length > 0) {
-        const linksMsg = lang === 'fr'
-          ? `🔵 ${validationLinks.length} autre(s) lien(s) trouvé(s)`
-          : `🔵 ${validationLinks.length} other link(s) found`;
-        await ctx.reply(linksMsg);
       }
     }
 
@@ -1289,9 +1294,9 @@ class TelegramBotService {
   private getMainKeyboard(lang: string, isLoggedIn: boolean) {
     return Markup.keyboard([
       [lang === 'fr' ? '📧 Génère nouvel email' : '📧 Generate new email'],
-      [lang === 'fr' ? '🔄 Rafraîchir' : '🔄 Refresh', lang === 'fr' ? '📬 Inbox' : '📬 Inbox'],
-      [lang === 'fr' ? '👤 Compte' : '👤 Account', lang === 'fr' ? '⚙️ Paramètres' : '⚙️ Settings'],
-      [lang === 'fr' ? '🤖 Automatisation' : '🤖 Automation'],
+      [lang === 'fr' ? '📁 Charger email' : '📁 Load email', lang === 'fr' ? '📬 Inbox' : '📬 Inbox'],
+      [lang === 'fr' ? '🔄 Rafraîchir' : '🔄 Refresh', lang === 'fr' ? '👤 Compte' : '👤 Account'],
+      [lang === 'fr' ? '⚙️ Paramètres' : '⚙️ Settings', lang === 'fr' ? '🤖 Automatisation' : '🤖 Automation'],
     ]).resize().persistent();
   }
 
@@ -1717,6 +1722,100 @@ class TelegramBotService {
     });
   }
 
+  private async showSystemStatus(ctx: BotContext) {
+    if (!ctx.chat) return;
+    
+    const session = this.sessions.get(ctx.chat.id);
+    const lang = session?.language || 'fr';
+    
+    const loadingMsg = lang === 'fr'
+      ? '🔍 Vérification du système...'
+      : '🔍 Checking system status...';
+    
+    const loadingMessage = await ctx.reply(loadingMsg);
+    
+    try {
+      let activeBrowsers = 0;
+      let maxBrowsers = 2;
+      let status = 'unknown';
+      let duration = 0;
+      let serverStatus = '';
+      
+      try {
+        const port = process.env.PORT || '5000';
+        const baseUrl = process.env.RENDER_EXTERNAL_HOSTNAME 
+          ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`
+          : `http://localhost:${port}`;
+        const apiUrl = `${baseUrl}/api/status`;
+        
+        console.log(`[TELEGRAM /status] Calling ${apiUrl}...`);
+        const startTime = Date.now();
+        const response = await axios.get(apiUrl, { timeout: 10000 });
+        duration = Date.now() - startTime;
+        
+        if (response.data && typeof response.data === 'object') {
+          activeBrowsers = response.data.activeBrowsers || 0;
+          maxBrowsers = response.data.maxBrowsers || 2;
+          status = response.data.status || 'unknown';
+          serverStatus = lang === 'fr' ? '🌐 Via API' : '🌐 Via API';
+          console.log(`[TELEGRAM /status] API call successful: ${JSON.stringify(response.data)}`);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (httpError: any) {
+        console.log(`[TELEGRAM /status] HTTP call failed, using direct service access: ${httpError.message}`);
+        const startTime = Date.now();
+        activeBrowsers = await linkValidationService.getActiveBrowserCount();
+        duration = Date.now() - startTime;
+        status = 'online';
+        serverStatus = lang === 'fr' ? '🔧 Direct' : '🔧 Direct';
+      }
+      
+      const uptime = process.uptime();
+      const uptimeHours = Math.floor(uptime / 3600);
+      const uptimeMinutes = Math.floor((uptime % 3600) / 60);
+      
+      const statusEmoji = status === 'online' ? '✅' : (status === 'unknown' ? '⚠️' : '❌');
+      const statusText = status === 'online' 
+        ? (lang === 'fr' ? 'En ligne' : 'Online') 
+        : (status === 'unknown' ? (lang === 'fr' ? 'Inconnu' : 'Unknown') : (lang === 'fr' ? 'Hors ligne' : 'Offline'));
+      
+      const statusMsg = lang === 'fr'
+        ? `📊 *État du Système*\n\n` +
+          `🤖 *Bot Telegram:* ✅ En ligne\n` +
+          `⏱️ *Uptime:* ${uptimeHours}h ${uptimeMinutes}min\n\n` +
+          `${serverStatus} *Serveur:* ${statusEmoji} ${statusText}\n` +
+          `🔄 Navigateurs actifs: ${activeBrowsers}/${maxBrowsers}\n` +
+          `⚡ Temps de réponse: ${duration}ms\n\n` +
+          `💡 Utilisez /help pour voir toutes les commandes`
+        : `📊 *System Status*\n\n` +
+          `🤖 *Telegram Bot:* ✅ Online\n` +
+          `⏱️ *Uptime:* ${uptimeHours}h ${uptimeMinutes}min\n\n` +
+          `${serverStatus} *Server:* ${statusEmoji} ${statusText}\n` +
+          `🔄 Active browsers: ${activeBrowsers}/${maxBrowsers}\n` +
+          `⚡ Response time: ${duration}ms\n\n` +
+          `💡 Use /help to see all commands`;
+      
+      await ctx.telegram.editMessageText(
+        ctx.chat.id,
+        loadingMessage.message_id,
+        undefined,
+        statusMsg,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (error: any) {
+      console.error(`[TELEGRAM /status] Unexpected error: ${error.message}`, error);
+      await ctx.telegram.editMessageText(
+        ctx.chat.id,
+        loadingMessage.message_id,
+        undefined,
+        lang === 'fr' 
+          ? `❌ Erreur lors de la vérification: ${error.message}`
+          : `❌ Check error: ${error.message}`
+      );
+    }
+  }
+
   async start() {
     if (!this.isEnabled || !this.bot) {
       console.log('ℹ️  [TELEGRAM] Bot is disabled - skipping initialization');
@@ -1738,6 +1837,15 @@ class TelegramBotService {
 
       if (text === '📧 Génère nouvel email' || text === '📧 Generate new email') {
         await this.generateRandomEmail(ctx);
+        return;
+      }
+
+      if (text === '📁 Charger email' || text === '📁 Load email') {
+        session.awaitingEmailAddress = true;
+        const msg = lang === 'fr' 
+          ? '📁 Entrez l\'adresse email que vous souhaitez charger:\n\nExemple: username@antdev.org ou username123@antdev.org' 
+          : '📁 Enter the email address you want to load:\n\nExample: username@antdev.org or username123@antdev.org';
+        await ctx.reply(msg);
         return;
       }
 
@@ -1792,10 +1900,51 @@ class TelegramBotService {
           return;
         }
         
+        // Vérifier si l'utilisateur a déjà un email actif
+        if (session.currentEmail && session.currentEmail !== text) {
+          session.pendingEmailChange = text;
+          delete session.awaitingEmailAddress;
+          
+          const confirmMsg = lang === 'fr'
+            ? `⚠️ Vous avez déjà un email actif: ${session.currentEmail}\n\nVoulez-vous le remplacer par: ${text} ?\n\nTapez "oui" pour confirmer ou "non" pour annuler.`
+            : `⚠️ You already have an active email: ${session.currentEmail}\n\nDo you want to replace it with: ${text} ?\n\nType "yes" to confirm or "no" to cancel.`;
+          
+          session.awaitingEmailChangeConfirmation = true;
+          await ctx.reply(confirmMsg);
+          return;
+        }
+        
         delete session.awaitingEmailAddress;
         session.currentEmail = text;
         
         await this.showInbox(ctx);
+        return;
+      }
+
+      if (session.awaitingEmailChangeConfirmation) {
+        const confirmed = text.toLowerCase() === 'oui' || text.toLowerCase() === 'yes';
+        
+        delete session.awaitingEmailChangeConfirmation;
+        
+        if (confirmed && session.pendingEmailChange) {
+          session.currentEmail = session.pendingEmailChange;
+          delete session.pendingEmailChange;
+          
+          const msg = lang === 'fr'
+            ? `✅ Email changé avec succès vers: ${session.currentEmail}`
+            : `✅ Email successfully changed to: ${session.currentEmail}`;
+          
+          await ctx.reply(msg, this.getMainKeyboard(lang, !!session.userId));
+          await this.showInbox(ctx);
+        } else {
+          delete session.pendingEmailChange;
+          
+          const msg = lang === 'fr'
+            ? '❌ Changement d\'email annulé'
+            : '❌ Email change cancelled';
+          
+          await ctx.reply(msg, this.getMainKeyboard(lang, !!session.userId));
+        }
         return;
       }
 

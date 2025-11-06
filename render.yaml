@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: zowa
+    env: node
+    buildCommand: bash render-build.sh
+    startCommand: npm run dev
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+        value: "0"
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /opt/render/.cache/ms-playwright
