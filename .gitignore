@@ -17,11 +17,19 @@ Dev/GitHub api/config.ini
 *.cookies.json
 validation-debug-*.png
 
-# Replit specific
+# Replit specific - cache et fichiers système
 .replit
 .config/
+.local/
+.upm/
+.breakpoints
 
 # Cache and logs
 .cache/
 *.log
 /tmp/
+
+# GitHub push scripts (temporaires, contiennent potentiellement des secrets)
+upload-changes.cjs
+push-*.ts
+push-*.js
