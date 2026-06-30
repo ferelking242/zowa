@@ -1,0 +1,35 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Environment variables
+.env
+.env.local
+
+# GitHub API config (contains secrets from .env)
+Dev/GitHub api/config.ini
+
+# Browser data - cookies and profiles for anti-detection
+.browser-data/
+*.cookies.json
+validation-debug-*.png
+
+# Replit specific - cache et fichiers système
+.replit
+.config/
+.local/
+.upm/
+.breakpoints
+
+# Cache and logs
+.cache/
+*.log
+/tmp/
+
+# GitHub push scripts (temporaires, contiennent potentiellement des secrets)
+upload-changes.cjs
+push-*.ts
+push-*.js

@@ -1,0 +1,216 @@
+{
+  "header": {
+    "title": "TempMail Pro",
+    "subtitle": "Temporary Email Service",
+    "autoRefresh": "Auto-refresh"
+  },
+  "hero": {
+    "title": "Disposable Email Address",
+    "description": "Generate temporary email addresses instantly. Perfect for testing, sign-ups, and protecting your privacy."
+  },
+  "emailGenerator": {
+    "yourEmail": "Your Temporary Email",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "generateNew": "Generate New",
+    "clearInbox": "Clear Inbox",
+    "messages": "Messages",
+    "validated": "Validated",
+    "active": "Active",
+    "paused": "Paused",
+    "autoRefresh": "Auto-refresh",
+    "on": "ON",
+    "off": "OFF",
+    "activeBrowsers": "Active browsers",
+    "customEmail": "Use Specific Email",
+    "enterUsername": "Enter username (e.g., faststar86)",
+    "checkAvailability": "Use This Email",
+    "checkAvailabilityShort": "Use",
+    "emailSet": "Email changed successfully",
+    "emailSetFailed": "Failed to set custom email",
+    "cancel": "Cancel",
+    "howItWorks": "How it works",
+    "howItWorksDesc": "Emails are automatically checked every {{interval}} seconds. Links in messages are validated automatically by our backend service."
+  },
+  "inbox": {
+    "title": "Inbox",
+    "empty": "Your inbox is empty",
+    "emptyDesc": "Messages will appear here automatically when received",
+    "refresh": "Refresh",
+    "from": "From",
+    "expiresIn": "Expires in",
+    "ago": "ago",
+    "justNow": "Just now",
+    "noContent": "No content available",
+    "backendStatus": "Backend Status"
+  },
+  "validation": {
+    "verified": "Verified",
+    "processing": "Processing",
+    "failed": "Failed",
+    "firebaseDetected": "Firebase Link Detected",
+    "autoValidated": "Auto-validated",
+    "autoVerified": "Email verified automatically via REST API",
+    "playwrightValidating": "Playwright Validating...",
+    "playwrightValidated": "Playwright Validated",
+    "headlessBrowser": "Headless Browser",
+    "validating": "Validating...",
+    "validated": "Validated",
+    "clickToVerify": "Click to Verify",
+    "defaultProvider": "Service",
+    "types": {
+      "verification": "Verification",
+      "reset": "Reset",
+      "confirmation": "Confirmation",
+      "action": "Action",
+      "unknown": "Link"
+    }
+  },
+  "features": {
+    "title": "Why Choose TempMail Pro?",
+    "instant": {
+      "title": "Instant Email Generation",
+      "description": "Create temporary email addresses in seconds. No registration required. Perfect for quick sign-ups and testing."
+    },
+    "autoValidation": {
+      "title": "Auto Link Validation",
+      "description": "Links in emails are automatically validated. Firebase verification links are processed instantly via REST API."
+    },
+    "realtime": {
+      "title": "Real-time Updates",
+      "description": "Messages appear automatically with {{interval}}-second polling. No need to manually refresh. Always stay updated."
+    }
+  },
+  "footer": {
+    "copyright": "© 2024 TempMail Pro. All rights reserved."
+  },
+  "toast": {
+    "emailCopied": "Email copied",
+    "emailCopiedDesc": "Email address has been copied to clipboard.",
+    "copyFailed": "Copy failed",
+    "copyFailedDesc": "Failed to copy email address. Please try again.",
+    "newEmailGenerated": "New email generated",
+    "newEmailGeneratedDesc": "Your new email address: {{email}}",
+    "inboxCleared": "Inbox cleared",
+    "inboxClearedDesc": "All messages have been deleted.",
+    "clearFailed": "Clear failed",
+    "clearFailedDesc": "Failed to clear inbox. Please try again.",
+    "messageDeleted": "Message deleted",
+    "messageDeletedDesc": "The message has been deleted successfully.",
+    "deleteFailed": "Delete failed",
+    "deleteFailedDesc": "Failed to delete the message. Please try again.",
+    "linkValidationStarted": "Validation link detected!",
+    "linkValidationStartedDesc": "We found a validation link in your email. It's being automatically validated.",
+    "linkValidationSuccess": "Link validated!",
+    "linkValidationSuccessDesc": "The validation link has been successfully processed ({{provider}})",
+    "linkValidationFailed": "Validation failed",
+    "linkValidationFailedDesc": "The validation link could not be processed. Please try manually.",
+    "newMessageReceived": "New email received!",
+    "newMessageReceivedDesc": "From {{from}} - {{subject}}",
+    "refreshing": "Refreshing",
+    "refreshingDesc": "Checking for new messages..."
+  },
+  "notifications": {
+    "newEmail": "📧 New email received",
+    "from": "From",
+    "emailFrom": "Email from {{provider}}",
+    "type": "Type"
+  },
+  "pages": {
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Customize your experience"
+    },
+    "help": {
+      "title": "Help & Shortcuts",
+      "subtitle": "Keyboard shortcuts and touch gestures guide"
+    },
+    "apiDocs": {
+      "title": "API Documentation",
+      "subtitle": "Complete TempMail API Guide"
+    },
+    "playwrightTest": {
+      "title": "Playwright Test",
+      "subtitle": "Email validation verification with browser automation",
+      "urlPlaceholder": "https://example.com/verify?token=..."
+    },
+    "history": {
+      "title": "History",
+      "subtitle": "View your generated emails tree and their messages",
+      "searchPlaceholder": "Search for an email...",
+      "filterPlaceholder": "Filter by message count"
+    }
+  },
+  "ui": {
+    "toggleSidebar": "Toggle Sidebar"
+  },
+  "automation": {
+    "title": "Account Automation",
+    "subtitle": "Automatically create accounts with Playwright",
+    "selectProvider": "Select a Service",
+    "selectProviderDesc": "Choose the service to create an account",
+    "email": "Email",
+    "startAutomation": "Start Automation",
+    "noActiveTask": "No active task",
+    "status": {
+      "title": "Status",
+      "description": "Progress of the current automation",
+      "pending": "Pending",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "logs": {
+      "title": "Logs"
+    },
+    "errors": {
+      "title": "Errors"
+    },
+    "screenshots": {
+      "title": "Screenshots",
+      "description": "Screenshots taken during the process",
+      "screenshot": "Screenshot"
+    },
+    "history": {
+      "title": "History",
+      "description": "Recent automation history"
+    }
+  },
+  "telegram": {
+    "welcome": "👋 Welcome to TempMail Pro Bot!\n\nI can help you manage your temporary emails.\n\n🔑 Login with /login to access your emails\n📧 Create an account with /register if you don't have one\n🌍 Change language with /language",
+    "loginPrompt": "📧 Please enter your email:",
+    "passwordPrompt": "🔑 Please enter your password:",
+    "registerStep1": "📝 Registration - Step 1/3\n\nEnter your email:",
+    "registerStep2": "📝 Registration - Step 2/3\n\nEnter your username (letters only, no digits):",
+    "registerStep3": "📝 Registration - Step 3/3\n\nEnter your password (minimum 8 characters):",
+    "languageChanged": "✅ Language changed to English",
+    "loginSuccess": "✅ Login successful!\n\nWelcome {{username}}!",
+    "loginFailed": "❌ Invalid email or password. Use /login to try again.",
+    "registerSuccess": "🎉 Registration successful!\n\nWelcome {{username}}!\n\nYour main email: {{email}}",
+    "registerFailed": "❌ Registration error: {{error}}",
+    "logoutSuccess": "👋 You have been logged out successfully!",
+    "notLoggedIn": "🔒 You must be logged in to access your inbox.\n\nUse /login to log in.",
+    "inboxTitle": "📬 Inbox for {{username}}\n\nMain email: {{email}}\nAvailable emails: {{username}}0@antdev.org - {{username}}1000000@antdev.org\n\n📊 Active emails: {{count}}",
+    "noMessages": "📭 No messages for {{email}}",
+    "messagesTitle": "📧 Messages for {{email}}\n\n",
+    "emailNumberPrompt": "🔢 Enter the number for your new email (0-1000000):",
+    "invalidNumber": "❌ Invalid number. Must be between 0 and 1000000.",
+    "emailCreated": "✅ Email {{email}} created successfully!",
+    "invalidUsername": "❌ Username must contain 3-20 letters (no digits).",
+    "usernameTaken": "❌ This username is already taken.",
+    "invalidPassword": "❌ Password must be at least 8 characters.",
+    "newMessageNotification": "📧 New message received!\n\n📨 From: {{from}}\n📝 Subject: {{subject}}\n📬 Email: {{email}}",
+    "buttons": {
+      "login": "🔑 Login",
+      "register": "📝 Register",
+      "inbox": "📬 Inbox",
+      "refresh": "🔄 Refresh",
+      "settings": "⚙️ Settings",
+      "profile": "👤 Profile",
+      "language": "🌍 Language",
+      "createEmail": "➕ Create Email",
+      "back": "⬅️ Back",
+      "automation": "🤖 Automation"
+    }
+  }
+}
