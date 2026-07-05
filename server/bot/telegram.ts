@@ -5,6 +5,7 @@ import { emailService } from '../services/emailService';
 import { accountAutomationService } from '../services/accountAutomationService';
 import { playwrightService } from '../services/playwrightService';
 import { linkValidationService } from '../services/linkValidationService';
+import { getAllDomains, EMAIL_PROVIDERS } from '@shared/email-providers';
 import type { User } from '@shared/schema';
 import axios from 'axios';
 
@@ -84,20 +85,26 @@ class TelegramBotService {
       const isLoggedIn = !!session?.userId;
       
       const welcomeMessage = lang === 'fr' 
-        ? `👋 Bienvenue sur TempMail Pro Bot!\n\n` +
-          `Je peux vous aider à gérer vos emails temporaires.\n\n` +
+        ? `📧 *The Official TempMail Bot*\n` +
+          `_From creators of the Legendary and Top#1 temporary email service_\n` +
+          `🌐 https://temp\\-mail\\.org | 🤖 @TempMail\\_org\\_bot\n\n` +
+          `👋 Bienvenue sur TempMail Pro Bot\\!\n\n` +
+          `Je peux vous aider à gérer vos emails temporaires\\.\n\n` +
           `📧 Utilisez "Génère nouvel email" pour créer un email\n` +
           `📬 Utilisez "Inbox" pour voir vos messages\n` +
           `👤 Utilisez "Compte" pour vous connecter ou créer un compte\n` +
-          `⚙️ Utilisez "Paramètres" pour configurer le bot`
-        : `👋 Welcome to TempMail Pro Bot!\n\n` +
-          `I can help you manage your temporary emails.\n\n` +
+          `⚙️ Utilisez "Paramètres" pour configurer le bot \\(domaine, langue…\\)`
+        : `📧 *The Official TempMail Bot*\n` +
+          `_From creators of the Legendary and Top#1 temporary email service_\n` +
+          `🌐 https://temp\\-mail\\.org | 🤖 @TempMail\\_org\\_bot\n\n` +
+          `👋 Welcome to TempMail Pro Bot\\!\n\n` +
+          `I can help you manage your temporary emails\\.\n\n` +
           `📧 Use "Generate new email" to create an email\n` +
           `📬 Use "Inbox" to see your messages\n` +
           `👤 Use "Account" to log in or create an account\n` +
-          `⚙️ Use "Settings" to configure the bot`;
+          `⚙️ Use "Settings" to configure the bot \\(domain, language…\\)`;
 
-      await ctx.reply(welcomeMessage, this.getMainKeyboard(lang, isLoggedIn));
+      await ctx.reply(welcomeMessage, { parse_mode: 'MarkdownV2', ...this.getMainKeyboard(lang, isLoggedIn) });
     });
 
     this.bot.command('login', async (ctx) => {
@@ -332,6 +339,60 @@ class TelegramBotService {
       
       const msg = lang === 'fr' ? '⬅️ Retour au menu principal' : '⬅️ Back to main menu';
       await ctx.reply(msg, this.getMainKeyboard(lang, !!session.userId));
+    });
+
+    // ── Domain selection ──────────────────────────────────────────────────
+    this.bot.action('settings_choose_domain', async (ctx) => {
+      if (!ctx.chat) return;
+      await ctx.answerCbQuery();
+      const session = this.sessions.get(ctx.chat.id);
+      const lang = session?.language || 'fr';
+      const currentDomain = session?.preferredDomain || 'antdev.org';
+
+      const header = lang === 'fr'
+        ? `🌐 *Choisir le domaine de génération automatique*\n\nDomaine actuel: \`@${currentDomain}\`\n\nChoisissez un domaine ci-dessous:`
+        : `🌐 *Choose the auto-generation domain*\n\nCurrent domain: \`@${currentDomain}\`\n\nSelect a domain below:`;
+
+      // Build one button per domain, 2 per row
+      const allDomains = getAllDomains();
+      const domainRows: ReturnType<typeof Markup.button.callback>[][] = [];
+      for (let i = 0; i < allDomains.length; i += 2) {
+        const row = [Markup.button.callback(`@${allDomains[i]}`, `set_domain_${allDomains[i]}`)];
+        if (allDomains[i + 1]) row.push(Markup.button.callback(`@${allDomains[i + 1]}`, `set_domain_${allDomains[i + 1]}`));
+        domainRows.push(row);
+      }
+      domainRows.push([Markup.button.callback(lang === 'fr' ? '⬅️ Retour' : '⬅️ Back', 'settings_open')]);
+
+      await ctx.reply(header, { parse_mode: 'Markdown', ...Markup.inlineKeyboard(domainRows) });
+    });
+
+    this.bot.action(/^set_domain_(.+)$/, async (ctx) => {
+      if (!ctx.chat) return;
+      const session = this.sessions.get(ctx.chat.id);
+      const lang = session?.language || 'fr';
+      const domain = ctx.match[1];
+
+      const allDomains = getAllDomains();
+      if (!allDomains.includes(domain)) {
+        await ctx.answerCbQuery(lang === 'fr' ? '❌ Domaine inconnu' : '❌ Unknown domain', { show_alert: true });
+        return;
+      }
+
+      session.preferredDomain = domain;
+
+      const msg = lang === 'fr'
+        ? `✅ Domaine mis à jour: \`@${domain}\`\n\nLes prochains emails générés utiliseront ce domaine.`
+        : `✅ Domain updated: \`@${domain}\`\n\nNext generated emails will use this domain.`;
+
+      await ctx.answerCbQuery(lang === 'fr' ? `✅ @${domain} sélectionné` : `✅ @${domain} selected`);
+      await ctx.reply(msg, { parse_mode: 'Markdown' });
+      await this.showSettings(ctx);
+    });
+
+    this.bot.action('settings_open', async (ctx) => {
+      if (!ctx.chat) return;
+      await ctx.answerCbQuery();
+      await this.showSettings(ctx);
     });
 
     this.bot.action('account_login', async (ctx) => {
@@ -1858,13 +1919,14 @@ class TelegramBotService {
     ]).resize().persistent();
   }
 
-  private generateRandomEmailAddress(): string {
+  private generateRandomEmailAddress(domain?: string): string {
     const adjectives = ["cool", "fast", "blue", "red", "zen", "soft", "gold", "dark", "lite", "deep"];
     const nouns = ["cat", "dog", "fox", "owl", "bee", "ray", "sky", "sun", "moon", "star"];
     const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     const randomNum = Math.floor(Math.random() * 99);
-    return `${randomAdj}${randomNoun}${randomNum}@antdev.org`;
+    const selectedDomain = domain || 'antdev.org';
+    return `${randomAdj}${randomNoun}${randomNum}@${selectedDomain}`;
   }
 
   private async generateRandomEmail(ctx: BotContext) {
@@ -1873,7 +1935,9 @@ class TelegramBotService {
     const session = this.sessions.get(ctx.chat.id);
     const lang = session?.language || 'fr';
     
-    const email = this.generateRandomEmailAddress();
+    // Use session-preferred domain for auto-generation
+    const preferredDomain = session?.preferredDomain || 'antdev.org';
+    const email = this.generateRandomEmailAddress(preferredDomain);
     session.currentEmail = email;
     session.lastEmailGeneratedMessages = [];
     
@@ -2080,6 +2144,8 @@ class TelegramBotService {
       ? (lang === 'fr' ? '🟢 Connecté' : '🟢 Logged in')
       : (lang === 'fr' ? '🔴 Non connecté' : '🔴 Not logged in');
 
+    const currentDomain = session?.preferredDomain || 'antdev.org';
+
     const settingsMsg = lang === 'fr'
       ? `🌹⃝━❮ Paramètres ❯━\n` +
         `┊ ┊ ┊ ┊ ┊ ⋆｡ ❀⋆｡ ☪︎⋆\n` +
@@ -2089,6 +2155,7 @@ class TelegramBotService {
         `┏━❮ Options ❯━\n` +
         `┃⛤┃👤 Statut: ${loginStatus}\n` +
         `┃⛤┃🌍 Langue: ${session.language === 'fr' ? 'Français 🇫🇷' : 'English 🇬🇧'}\n` +
+        `┃⛤┃🌐 Domaine: @${currentDomain}\n` +
         (isLoggedIn ? `┃⛤┃✅ Auto-validation: ${autoValidation ? 'Activée ✅' : 'Désactivée ❌'}\n` : '') +
         `┃⛤┃🔔 Notifications: Actives\n` +
         `┃⛤┗━━━━━━━━━𖣔𖣔\n` +
@@ -2102,6 +2169,7 @@ class TelegramBotService {
         `┏━❮ Options ❯━\n` +
         `┃⛤┃👤 Status: ${loginStatus}\n` +
         `┃⛤┃🌍 Language: ${session.language === 'fr' ? 'Français 🇫🇷' : 'English 🇬🇧'}\n` +
+        `┃⛤┃🌐 Domain: @${currentDomain}\n` +
         (isLoggedIn ? `┃⛤┃✅ Auto-validation: ${autoValidation ? 'Enabled ✅' : 'Disabled ❌'}\n` : '') +
         `┃⛤┃🔔 Notifications: Active\n` +
         `┃⛤┗━━━━━━━━━𖣔𖣔\n` +
@@ -2112,6 +2180,10 @@ class TelegramBotService {
       [Markup.button.callback(
         lang === 'fr' ? '🌍 Changer la langue' : '🌍 Change language',
         'settings_language'
+      )],
+      [Markup.button.callback(
+        lang === 'fr' ? `🌐 Domaine: @${currentDomain}` : `🌐 Domain: @${currentDomain}`,
+        'settings_choose_domain'
       )],
     ];
 

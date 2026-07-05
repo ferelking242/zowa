@@ -9,9 +9,23 @@ export interface EmailProvider {
     customDomains: boolean;
   };
   description: string;
+  apiType?: 'devtai' | 'guerrilla' | 'onesecmail' | 'maildrop' | 'tempmail';
 }
 
 export const EMAIL_PROVIDERS: EmailProvider[] = [
+  {
+    id: 'tempmail',
+    name: 'TempMail Official',
+    baseUrl: 'https://api.temp-mail.org/request',
+    domains: ['homephit.com'],
+    features: {
+      freeApi: true,
+      unlimited: true,
+      customDomains: false,
+    },
+    description: 'The Official TempMail — top#1 temp email service. Domains fiables, non bloqués.',
+    apiType: 'tempmail',
+  },
   {
     id: 'devtai',
     name: 'DevTai Email',
@@ -22,7 +36,8 @@ export const EMAIL_PROVIDERS: EmailProvider[] = [
       unlimited: true,
       customDomains: false,
     },
-    description: 'Service principal avec API gratuite et illimitée'
+    description: 'Service principal avec API gratuite et illimitée',
+    apiType: 'devtai',
   },
   {
     id: 'guerrilla',
@@ -34,7 +49,8 @@ export const EMAIL_PROVIDERS: EmailProvider[] = [
       unlimited: true,
       customDomains: false,
     },
-    description: '100% gratuit, API publique et ouverte, emails valables 60 minutes'
+    description: '100% gratuit, API publique et ouverte, emails valables 60 minutes',
+    apiType: 'guerrilla',
   },
   {
     id: 'onesecmail',
@@ -46,7 +62,8 @@ export const EMAIL_PROVIDERS: EmailProvider[] = [
       unlimited: true,
       customDomains: false,
     },
-    description: 'API simple et gratuite, emails actifs pendant 2 jours'
+    description: 'API simple et gratuite, emails actifs pendant 2 jours',
+    apiType: 'onesecmail',
   },
   {
     id: 'maildrop',
@@ -58,7 +75,8 @@ export const EMAIL_PROVIDERS: EmailProvider[] = [
       unlimited: true,
       customDomains: false,
     },
-    description: 'API GraphQL moderne avec filtrage spam intégré'
+    description: 'API GraphQL moderne avec filtrage spam intégré',
+    apiType: 'maildrop',
   },
 ];
 
