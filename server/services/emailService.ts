@@ -27,6 +27,55 @@ export class EmailService {
   }
 
   // ──────────────────────────────────────────────
+  // 1SecMail API — 1secmail.com / .org / .net
+  // ──────────────────────────────────────────────
+  private async getOneSecMailMessages(email: string): Promise<Message[]> {
+    const [login, domain] = email.split('@');
+    if (!login || !domain) return [];
+    const url = `https://www.1secmail.com/api/v1/?action=getMessages&login=${encodeURIComponent(login)}&domain=${encodeURIComponent(domain)}`;
+    try {
+      const response = await axios.get(url, { timeout: 10000 });
+      const raw: any[] = response.data;
+      if (!Array.isArray(raw)) return [];
+      return raw.map((msg: any) => ({
+        id: String(msg.id),
+        subject: msg.subject || '(no subject)',
+        fromAddress: msg.from || '',
+        toAddress: email,
+        htmlContent: null,
+        textContent: null,
+        createdAt: msg.date ? new Date(msg.date).getTime() : Date.now(),
+        expiresAt: Date.now() + 2 * 24 * 60 * 60 * 1000,
+      }));
+    } catch (error: any) {
+      if (error?.response?.status === 404) return [];
+      console.error(`❌ [1SECMAIL] Failed for ${email}:`, error?.message);
+      return [];
+    }
+  }
+
+  private async getOneSecMailMessageDetails(login: string, domain: string, id: string): Promise<Message | null> {
+    try {
+      const url = `https://www.1secmail.com/api/v1/?action=readMessage&login=${encodeURIComponent(login)}&domain=${encodeURIComponent(domain)}&id=${id}`;
+      const response = await axios.get(url, { timeout: 10000 });
+      const msg = response.data;
+      return {
+        id: String(msg.id),
+        subject: msg.subject || '(no subject)',
+        fromAddress: msg.from || '',
+        toAddress: `${login}@${domain}`,
+        htmlContent: msg.htmlBody || null,
+        textContent: msg.textBody || null,
+        createdAt: msg.date ? new Date(msg.date).getTime() : Date.now(),
+        expiresAt: Date.now() + 2 * 24 * 60 * 60 * 1000,
+      };
+    } catch (error) {
+      console.error('Failed to fetch 1SecMail message details:', error);
+      return null;
+    }
+  }
+
+  // ──────────────────────────────────────────────
   // TempMail (temp-mail.org) API — homephit.com
   // ──────────────────────────────────────────────
   private async getTempMailMessages(email: string): Promise<Message[]> {
@@ -103,8 +152,10 @@ export class EmailService {
 
       if (apiType === 'tempmail') {
         messages = await this.getTempMailMessages(email);
+      } else if (apiType === 'onesecmail') {
+        messages = await this.getOneSecMailMessages(email);
       } else {
-        // DevTai (default)
+        // DevTai (default for devtai / guerrilla / maildrop fallback)
         const response = await axios.get(`${this.baseUrl}/email/${email}`);
         const rawMessages = response.data;
         messages = rawMessages.map((msg: any) => this.normalizeMessage(msg));

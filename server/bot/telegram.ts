@@ -55,7 +55,8 @@ class TelegramBotService {
     }
     
     if (session.userId && session.username) {
-      return `${session.username}@antdev.org`;
+      const domain = session.preferredDomain || 'antdev.org';
+      return `${session.username}@${domain}`;
     }
     
     return null;
@@ -757,7 +758,8 @@ class TelegramBotService {
       let email: string;
       if (session?.userId && session?.username) {
         const randomNum = Math.floor(Math.random() * 1000000);
-        email = `${session.username}${randomNum}@antdev.org`;
+        const autoDomain = session.preferredDomain || 'antdev.org';
+        email = `${session.username}${randomNum}@${autoDomain}`;
       } else {
         email = this.generateRandomEmailAddress();
       }
@@ -1643,7 +1645,7 @@ class TelegramBotService {
       await ctx.reply(msg, Markup.inlineKeyboard(keyboard));
     } else if (session.userId) {
       const username = session.username;
-      const domain = 'antdev.org';
+      const domain = session.preferredDomain || 'antdev.org';
       
       const rangeStart = session.isRangeMode ? (session.rangeStart || 0) : 0;
       const rangeEnd = session.isRangeMode ? (session.rangeEnd || 9) : 9;
@@ -1733,7 +1735,7 @@ class TelegramBotService {
     let email: string;
     if (session.userId && number !== undefined) {
       const username = session.username;
-      const domain = 'antdev.org';
+      const domain = session.preferredDomain || 'antdev.org';
       email = number === 0 ? `${username}@${domain}` : `${username}${number}@${domain}`;
     } else if (session.currentEmail) {
       email = session.currentEmail;
