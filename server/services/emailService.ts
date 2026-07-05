@@ -5,7 +5,7 @@ import { cacheService } from './cacheService';
 import { getProviderByDomain } from '@shared/email-providers';
 
 export class EmailService {
-  private devtaiBaseUrl = 'https://email.devtai.net/api';
+  private devtaiBaseUrl = 'https://orifymail.com/api';
   private cacheTTL = 10000; // 10 seconds
 
   // ── mail.tm credential store ── email → JWT token ──────────────────────────
