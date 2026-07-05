@@ -55,7 +55,7 @@ class TelegramBotService {
     }
     
     if (session.userId && session.username) {
-      const domain = session.preferredDomain || 'antdev.org';
+      const domain = session.preferredDomain || getAllDomains()[0];
       return `${session.username}@${domain}`;
     }
     
@@ -289,8 +289,8 @@ class TelegramBotService {
       } else {
         session.awaitingNewEmail = true;
         const msg = lang === 'fr' 
-          ? `📧 *Générer un nouvel email*\n\nEntrez l'adresse email que vous souhaitez créer.\n\n💡 Format: username@antdev.org ou username123@antdev.org`
-          : `📧 *Generate new email*\n\nEnter the email address you want to create.\n\n💡 Format: username@antdev.org or username123@antdev.org`;
+          ? `📧 *Générer un nouvel email*\n\nEntrez l'adresse email que vous souhaitez créer.\n\n💡 Format: username@epmtyfl.me ou username123@epmtyfl.me`
+          : `📧 *Generate new email*\n\nEnter the email address you want to create.\n\n💡 Format: username@epmtyfl.me or username123@epmtyfl.me`;
         await ctx.answerCbQuery();
         await ctx.reply(msg, { parse_mode: 'Markdown' });
       }
@@ -305,8 +305,8 @@ class TelegramBotService {
       session.awaitingEmailAddress = true;
       
       const msg = lang === 'fr' 
-        ? '📧 Entrez l\'adresse email que vous souhaitez consulter:\n\nExemple: username@antdev.org ou username123@antdev.org' 
-        : '📧 Enter the email address you want to check:\n\nExample: username@antdev.org or username123@antdev.org';
+        ? '📧 Entrez l\'adresse email que vous souhaitez consulter:\n\nExemple: username@epmtyfl.me ou username123@epmtyfl.me' 
+        : '📧 Enter the email address you want to check:\n\nExample: username@epmtyfl.me or username123@epmtyfl.me';
       
       await ctx.answerCbQuery();
       await ctx.reply(msg);
@@ -348,7 +348,7 @@ class TelegramBotService {
       await ctx.answerCbQuery();
       const session = this.sessions.get(ctx.chat.id);
       const lang = session?.language || 'fr';
-      const currentDomain = session?.preferredDomain || 'antdev.org';
+      const currentDomain = session?.preferredDomain || getAllDomains()[0];
 
       const header = lang === 'fr'
         ? `🌐 *Choisir le domaine de génération automatique*\n\nDomaine actuel: \`@${currentDomain}\`\n\nChoisissez un domaine ci-dessous:`
@@ -758,7 +758,7 @@ class TelegramBotService {
       let email: string;
       if (session?.userId && session?.username) {
         const randomNum = Math.floor(Math.random() * 1000000);
-        const autoDomain = session.preferredDomain || 'antdev.org';
+        const autoDomain = session.preferredDomain || getAllDomains()[0];
         email = `${session.username}${randomNum}@${autoDomain}`;
       } else {
         email = this.generateRandomEmailAddress();
@@ -1030,7 +1030,7 @@ class TelegramBotService {
       await ctx.answerCbQuery();
 
       const prefix = session.seriesPrefix || 'MYMAIL';
-      const domain = session.seriesDomain || 'antdev.org';
+      const domain = session.seriesDomain || getAllDomains()[0];
       const counter = session.seriesCounter || 1;
       const padded = String(counter).padStart(3, '0');
       const email = `${prefix.toLowerCase()}${padded}@${domain}`;
@@ -1078,10 +1078,10 @@ class TelegramBotService {
       await ctx.answerCbQuery();
       
       session.awaitingSeriesDomain = true;
-      const currentDomain = session.seriesDomain || 'antdev.org';
+      const currentDomain = session.seriesDomain || getAllDomains()[0];
       const msg = lang === 'fr'
-        ? `🌐 *Changer le domaine*\n\nDomaine actuel: \`${currentDomain}\`\n\nEntrez le nouveau domaine:\n\nExemple: \`antdev.org\`, \`gmail.com\`, \`proton.me\``
-        : `🌐 *Change domain*\n\nCurrent domain: \`${currentDomain}\`\n\nEnter the new domain:\n\nExample: \`antdev.org\`, \`gmail.com\`, \`proton.me\``;
+        ? `🌐 *Changer le domaine*\n\nDomaine actuel: \`${currentDomain}\`\n\nEntrez le nouveau domaine:\n\nExemple: \`epmtyfl.me\`, \`gmail.com\`, \`proton.me\``
+        : `🌐 *Change domain*\n\nCurrent domain: \`${currentDomain}\`\n\nEnter the new domain:\n\nExample: \`epmtyfl.me\`, \`gmail.com\`, \`proton.me\``;
       await ctx.reply(msg, { parse_mode: 'Markdown' });
     });
 
@@ -1106,7 +1106,7 @@ class TelegramBotService {
       
       session.seriesCounter = 1;
       const prefix = session.seriesPrefix || 'MYMAIL';
-      const domain = session.seriesDomain || 'antdev.org';
+      const domain = session.seriesDomain || getAllDomains()[0];
       const msg = lang === 'fr'
         ? `✅ Compteur remis à 1\n\nProchain email: \`${prefix.toLowerCase()}001@${domain}\``
         : `✅ Counter reset to 1\n\nNext email: \`${prefix.toLowerCase()}001@${domain}\``;
@@ -1590,8 +1590,8 @@ class TelegramBotService {
     
     if (!session?.currentEmail && !session?.userId) {
       const msg = lang === 'fr' 
-        ? '📬 *Inbox*\n\nPour voir votre inbox, entrez une adresse email.\n\nExemple: username@antdev.org ou username123@antdev.org' 
-        : '📬 *Inbox*\n\nTo view your inbox, enter an email address.\n\nExample: username@antdev.org or username123@antdev.org';
+        ? '📬 *Inbox*\n\nPour voir votre inbox, entrez une adresse email.\n\nExemple: username@epmtyfl.me ou username123@epmtyfl.me' 
+        : '📬 *Inbox*\n\nTo view your inbox, enter an email address.\n\nExample: username@epmtyfl.me or username123@epmtyfl.me';
       
       session.awaitingEmailAddress = true;
       await ctx.reply(msg, { parse_mode: 'Markdown' });
@@ -1604,8 +1604,8 @@ class TelegramBotService {
 
       const accountInfo = session.userId 
         ? (lang === 'fr' 
-          ? `\n🔑 Connecté: ${session.username}\n📧 Vous pouvez aussi utiliser: ${session.username}@antdev.org`
-          : `\n🔑 Logged in: ${session.username}\n📧 You can also use: ${session.username}@antdev.org`)
+          ? `\n🔑 Connecté: ${session.username}\n📧 Vous pouvez aussi utiliser: ${session.username}@epmtyfl.me`
+          : `\n🔑 Logged in: ${session.username}\n📧 You can also use: ${session.username}@epmtyfl.me`)
         : (lang === 'fr' 
           ? `\n💡 Connectez-vous pour gérer plusieurs emails simultanément`
           : `\n💡 Log in to manage multiple emails simultaneously`);
@@ -1645,7 +1645,7 @@ class TelegramBotService {
       await ctx.reply(msg, Markup.inlineKeyboard(keyboard));
     } else if (session.userId) {
       const username = session.username;
-      const domain = session.preferredDomain || 'antdev.org';
+      const domain = session.preferredDomain || getAllDomains()[0];
       
       const rangeStart = session.isRangeMode ? (session.rangeStart || 0) : 0;
       const rangeEnd = session.isRangeMode ? (session.rangeEnd || 9) : 9;
@@ -1735,7 +1735,7 @@ class TelegramBotService {
     let email: string;
     if (session.userId && number !== undefined) {
       const username = session.username;
-      const domain = session.preferredDomain || 'antdev.org';
+      const domain = session.preferredDomain || getAllDomains()[0];
       email = number === 0 ? `${username}@${domain}` : `${username}${number}@${domain}`;
     } else if (session.currentEmail) {
       email = session.currentEmail;
@@ -1922,13 +1922,18 @@ class TelegramBotService {
   }
 
   private generateRandomEmailAddress(domain?: string): string {
-    const adjectives = ["cool", "fast", "blue", "red", "zen", "soft", "gold", "dark", "lite", "deep"];
-    const nouns = ["cat", "dog", "fox", "owl", "bee", "ray", "sky", "sun", "moon", "star"];
-    const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-    const randomNum = Math.floor(Math.random() * 99);
-    const selectedDomain = domain || 'antdev.org';
-    return `${randomAdj}${randomNoun}${randomNum}@${selectedDomain}`;
+    const heroes = [
+      'godfrost', 'flashnova', 'ironwolf', 'neostar', 'darkpeak',
+      'voidcore', 'stormrex', 'frostbolt', 'rayden', 'jadewolf',
+      'ashrock', 'novadawn', 'echoflame', 'apexcrow', 'fluxhawk',
+      'bytestorm', 'zenwave', 'boldfire', 'ghostfox', 'titansky',
+      'cyberblaze', 'driftwood', 'prismlight', 'arcforge', 'nexusx',
+      'solarwind', 'lunarfox', 'crystaln', 'oxidecore', 'zenithx'
+    ];
+    const hero = heroes[Math.floor(Math.random() * heroes.length)];
+    const num = Math.floor(Math.random() * 9000) + 1000; // always 4 digits
+    const selectedDomain = domain || getAllDomains()[0];
+    return `${hero}${num}@${selectedDomain}`;
   }
 
   private async generateRandomEmail(ctx: BotContext) {
@@ -1938,7 +1943,7 @@ class TelegramBotService {
     const lang = session?.language || 'fr';
     
     // Use session-preferred domain for auto-generation
-    const preferredDomain = session?.preferredDomain || 'antdev.org';
+    const preferredDomain = session?.preferredDomain || getAllDomains()[0];
     const email = this.generateRandomEmailAddress(preferredDomain);
     session.currentEmail = email;
     session.lastEmailGeneratedMessages = [];
@@ -2001,23 +2006,23 @@ class TelegramBotService {
       ? `👤 *Votre Profil*\n\n` +
         `📧 Email: ${user.email}\n` +
         `👤 Nom d'utilisateur: ${user.username}\n` +
-        `📬 Email principal: ${user.username}@antdev.org\n` +
+        `📬 Email principal: ${user.username}@epmtyfl.me\n` +
         `📅 Membre depuis: ${createdDate}\n\n` +
         `✨ Emails disponibles:\n` +
-        `• ${user.username}@antdev.org\n` +
-        `• ${user.username}0@antdev.org\n` +
-        `• ${user.username}1@antdev.org\n` +
-        `• ... ${user.username}1000000@antdev.org`
+        `• ${user.username}@epmtyfl.me\n` +
+        `• ${user.username}0@epmtyfl.me\n` +
+        `• ${user.username}1@epmtyfl.me\n` +
+        `• ... ${user.username}1000000@epmtyfl.me`
       : `👤 *Your Profile*\n\n` +
         `📧 Email: ${user.email}\n` +
         `👤 Username: ${user.username}\n` +
-        `📬 Main email: ${user.username}@antdev.org\n` +
+        `📬 Main email: ${user.username}@epmtyfl.me\n` +
         `📅 Member since: ${createdDate}\n\n` +
         `✨ Available emails:\n` +
-        `• ${user.username}@antdev.org\n` +
-        `• ${user.username}0@antdev.org\n` +
-        `• ${user.username}1@antdev.org\n` +
-        `• ... ${user.username}1000000@antdev.org`;
+        `• ${user.username}@epmtyfl.me\n` +
+        `• ${user.username}0@epmtyfl.me\n` +
+        `• ${user.username}1@epmtyfl.me\n` +
+        `• ... ${user.username}1000000@epmtyfl.me`;
 
     await ctx.reply(profileMsg, { parse_mode: 'Markdown' });
   }
@@ -2045,7 +2050,7 @@ class TelegramBotService {
             `┏━❮ Informations ❯━\n` +
             `┃⛤┃📧 Email: ${user.email}\n` +
             `┃⛤┃👤 Username: ${user.username}\n` +
-            `┃⛤┃📬 Email Principal: ${user.username}@antdev.org\n` +
+            `┃⛤┃📬 Email Principal: ${user.username}@epmtyfl.me\n` +
             `┃⛤┃📅 Membre depuis: ${createdDate}\n` +
             `┃⛤┃🔔 Status: Connecté\n` +
             `┃⛤┗━━━━━━━━━𖣔𖣔\n` +
@@ -2059,7 +2064,7 @@ class TelegramBotService {
             `┏━❮ Information ❯━\n` +
             `┃⛤┃📧 Email: ${user.email}\n` +
             `┃⛤┃👤 Username: ${user.username}\n` +
-            `┃⛤┃📬 Main Email: ${user.username}@antdev.org\n` +
+            `┃⛤┃📬 Main Email: ${user.username}@epmtyfl.me\n` +
             `┃⛤┃📅 Member since: ${createdDate}\n` +
             `┃⛤┃🔔 Status: Connected\n` +
             `┃⛤┗━━━━━━━━━𖣔𖣔\n` +
@@ -2146,7 +2151,7 @@ class TelegramBotService {
       ? (lang === 'fr' ? '🟢 Connecté' : '🟢 Logged in')
       : (lang === 'fr' ? '🔴 Non connecté' : '🔴 Not logged in');
 
-    const currentDomain = session?.preferredDomain || 'antdev.org';
+    const currentDomain = session?.preferredDomain || getAllDomains()[0];
 
     const settingsMsg = lang === 'fr'
       ? `🌹⃝━❮ Paramètres ❯━\n` +
@@ -2334,7 +2339,7 @@ class TelegramBotService {
     const lang = session?.language || 'fr';
 
     const prefix = session.seriesPrefix || 'MYMAIL';
-    const domain = session.seriesDomain || 'antdev.org';
+    const domain = session.seriesDomain || getAllDomains()[0];
     const counter = session.seriesCounter || 1;
     const padded = String(counter).padStart(3, '0');
     const nextEmail = `${prefix.toLowerCase()}${padded}@${domain}`;
@@ -2534,8 +2539,8 @@ class TelegramBotService {
       if (text === '📁 Charger email' || text === '📁 Load email') {
         session.awaitingEmailAddress = true;
         const msg = lang === 'fr' 
-          ? '📁 Entrez l\'adresse email que vous souhaitez charger:\n\nExemple: username@antdev.org ou username123@antdev.org' 
-          : '📁 Enter the email address you want to load:\n\nExample: username@antdev.org or username123@antdev.org';
+          ? '📁 Entrez l\'adresse email que vous souhaitez charger:\n\nExemple: username@epmtyfl.me ou username123@epmtyfl.me' 
+          : '📁 Enter the email address you want to load:\n\nExample: username@epmtyfl.me or username123@epmtyfl.me';
         await ctx.reply(msg);
         return;
       }
@@ -2577,7 +2582,7 @@ class TelegramBotService {
         }
         delete session.awaitingSeriesPrefix;
         session.seriesPrefix = trimmed;
-        const domain = session.seriesDomain || 'antdev.org';
+        const domain = session.seriesDomain || getAllDomains()[0];
         const counter = session.seriesCounter || 1;
         const padded = String(counter).padStart(3, '0');
         await ctx.reply(
@@ -2594,8 +2599,8 @@ class TelegramBotService {
         const trimmed = text.trim().toLowerCase();
         if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(trimmed)) {
           await ctx.reply(lang === 'fr'
-            ? '❌ Domaine invalide.\n\nExemple: `antdev.org`, `gmail.com`'
-            : '❌ Invalid domain.\n\nExample: `antdev.org`, `gmail.com`',
+            ? '❌ Domaine invalide.\n\nExemple: `epmtyfl.me`, `gmail.com`'
+            : '❌ Invalid domain.\n\nExample: `epmtyfl.me`, `gmail.com`',
             { parse_mode: 'Markdown' }
           );
           return;
@@ -2627,7 +2632,7 @@ class TelegramBotService {
         delete session.awaitingSeriesStart;
         session.seriesCounter = num;
         const prefix = session.seriesPrefix || 'MYMAIL';
-        const domain = session.seriesDomain || 'antdev.org';
+        const domain = session.seriesDomain || getAllDomains()[0];
         const padded = String(num).padStart(3, '0');
         await ctx.reply(
           lang === 'fr'
@@ -2640,11 +2645,16 @@ class TelegramBotService {
       }
 
       if (session.awaitingNewEmail) {
-        const emailPattern = /^[a-zA-Z0-9]+\d*@antdev\.org$/;
-        if (!emailPattern.test(text)) {
+        // Accept any email with a supported domain
+        const emailParts = text.split('@');
+        const isValidEmail = emailParts.length === 2 &&
+          /^[a-zA-Z0-9._-]+$/.test(emailParts[0]) &&
+          getAllDomains().includes(emailParts[1]);
+        if (!isValidEmail) {
+          const domainList = getAllDomains().slice(0, 3).map(d => `@${d}`).join(', ');
           const msg = lang === 'fr' 
-            ? '❌ Format invalide. Utilisez: username@antdev.org ou username123@antdev.org' 
-            : '❌ Invalid format. Use: username@antdev.org or username123@antdev.org';
+            ? `❌ Format invalide.\n\nUtilisez un domaine supporté: ${domainList}…\n\nExemple: monnom@epmtyfl.me` 
+            : `❌ Invalid format.\n\nUse a supported domain: ${domainList}…\n\nExample: myname@epmtyfl.me`;
           await ctx.reply(msg);
           return;
         }
@@ -2661,11 +2671,15 @@ class TelegramBotService {
       }
 
       if (session.awaitingEmailAddress) {
-        const emailPattern = /^[a-zA-Z0-9]+\d*@antdev\.org$/;
-        if (!emailPattern.test(text)) {
+        // Accept any valid email (not just our domains, allow fetching any address)
+        const emailParts = text.split('@');
+        const isValidEmail = emailParts.length === 2 &&
+          /^[a-zA-Z0-9._-]+$/.test(emailParts[0]) &&
+          emailParts[1].includes('.');
+        if (!isValidEmail) {
           const msg = lang === 'fr' 
-            ? '❌ Format invalide. Utilisez: username@antdev.org ou username123@antdev.org' 
-            : '❌ Invalid format. Use: username@antdev.org or username123@antdev.org';
+            ? '❌ Format invalide.\n\nEntrez une adresse email valide.\n\nExemple: monnom@epmtyfl.me' 
+            : '❌ Invalid format.\n\nEnter a valid email address.\n\nExample: myname@epmtyfl.me';
           await ctx.reply(msg);
           return;
         }
@@ -2730,8 +2744,8 @@ class TelegramBotService {
         
         delete session.awaitingEmailNumber;
         const email = number === 0 
-          ? `${session.username}@antdev.org` 
-          : `${session.username}${number}@antdev.org`;
+          ? `${session.username}@epmtyfl.me` 
+          : `${session.username}${number}@epmtyfl.me`;
         
         const msg = lang === 'fr' 
           ? `✅ Email ${email} créé avec succès!` 
@@ -2886,8 +2900,8 @@ class TelegramBotService {
           delete session.registerUsername;
           
           const msg = lang === 'fr' 
-            ? `🎉 Inscription réussie!\n\nBienvenue ${user.username}!\n\nVotre email principal: ${user.username}@antdev.org` 
-            : `🎉 Registration successful!\n\nWelcome ${user.username}!\n\nYour main email: ${user.username}@antdev.org`;
+            ? `🎉 Inscription réussie!\n\nBienvenue ${user.username}!\n\nVotre email principal: ${user.username}@epmtyfl.me` 
+            : `🎉 Registration successful!\n\nWelcome ${user.username}!\n\nYour main email: ${user.username}@epmtyfl.me`;
           
           await ctx.reply(msg, this.getMainKeyboard(lang, true));
         } catch (error: any) {

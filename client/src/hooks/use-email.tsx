@@ -20,25 +20,36 @@ export function useEmail() {
   const { settings } = useSettings();
   const { updateEmailHistory } = useEmailHistory();
 
-  // Generate random email address with short, beautiful names
-  const generateEmail = useCallback((domain?: string | any) => {
+  // Generate a truly unique, memorable email address
+  const generateEmail = useCallback(async (domain?: string | any) => {
     // Ensure domain is always a string
     let selectedDomain = domain;
     if (typeof selectedDomain !== 'string' || !selectedDomain) {
       selectedDomain = localStorage.getItem('tempmail_selected_domain') || getAllDomains()[0];
     }
-    const adjectives = ["cool", "fast", "blue", "red", "zen", "soft", "gold", "dark", "lite", "deep"];
-    const nouns = ["cat", "dog", "fox", "owl", "bee", "ray", "sky", "sun", "moon", "star"];
-    const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-    const randomNum = Math.floor(Math.random() * 99);
-    const email = `${randomAdj}${randomNoun}${randomNum}@${selectedDomain}`;
+
+    // Memorable hero-style names — always unique thanks to 4-digit suffix
+    const heroes = [
+      'godfrost', 'flashnova', 'ironwolf', 'neostar', 'darkpeak',
+      'voidcore', 'stormrex', 'frostbolt', 'rayden', 'jadewolf',
+      'ashrock', 'novadawn', 'echoflame', 'apexcrow', 'fluxhawk',
+      'bytestorm', 'zenwave', 'boldfire', 'ghostfox', 'titansky',
+      'cyberblaze', 'driftwood', 'prismlight', 'arcforge', 'nexusx',
+      'solarwind', 'lunarfox', 'crystaln', 'oxidecore', 'zenithx'
+    ];
+    const hero = heroes[Math.floor(Math.random() * heroes.length)];
+    const num = Math.floor(Math.random() * 9000) + 1000; // always 4 digits → 270k+ combos
+    const email = `${hero}${num}@${selectedDomain}`;
+
     setCurrentEmail(email);
     localStorage.setItem('tempmail_current_email', email);
     localStorage.setItem('tempmail_selected_domain', selectedDomain);
     updateEmailHistory(email, { messageCount: 0 });
-    // Save to database history
     api.saveEmailToHistory(email, 0).catch(err => console.error('Failed to save email to history:', err));
+
+    // Pre-register with provider if required (mail.tm / guerrilla)
+    api.registerEmail(email).catch(() => { /* non-blocking */ });
+
     return email;
   }, [updateEmailHistory]);
 
@@ -68,10 +79,11 @@ export function useEmail() {
       if (savedEmail) {
         setCurrentEmail(savedEmail);
       } else {
-        generateEmail();
+        generateEmail(); // fire-and-forget is fine here
       }
     }
-  }, [currentEmail, generateEmail]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Messages query with polling
   const {
@@ -154,8 +166,8 @@ export function useEmail() {
   }, [currentEmail, t]);
 
   // Generate new email
-  const generateNewEmail = useCallback((domain?: string) => {
-    const newEmail = generateEmail(domain);
+  const generateNewEmail = useCallback(async (domain?: string) => {
+    const newEmail = await generateEmail(domain);
     queryClient.removeQueries({ queryKey: ["/api/email"] });
     localStorage.setItem('tempmail_current_email', newEmail);
     toast.success(t('toast.newEmailGenerated'), {

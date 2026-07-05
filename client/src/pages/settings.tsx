@@ -2,15 +2,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { SimpleHeader } from "@/components/simple-header";
 import { PageHeader } from "@/components/page-header";
-import { Gear, CheckCircle, ArrowsLeftRight, ArrowCounterClockwise, Bell, ShieldCheck } from "@phosphor-icons/react";
+import { Gear, CheckCircle, ArrowsLeftRight, ArrowCounterClockwise, Bell, ShieldCheck, Globe } from "@phosphor-icons/react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { EMAIL_PROVIDERS } from "@shared/email-providers";
 import {
   Select,
   SelectContent,
@@ -236,6 +238,50 @@ export default function Settings() {
                   Action déclenchée en glissant un email vers la droite
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Email Providers */}
+          <Card className="border-2 hover:border-blue-500/50 transition-colors">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-blue-500" weight="fill" />
+                Fournisseurs d'email actifs
+              </CardTitle>
+              <CardDescription>
+                Domaines disponibles par fournisseur — classés par priorité
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {EMAIL_PROVIDERS.map((provider) => (
+                <div key={provider.id} className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="font-medium text-sm">{provider.name}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {provider.features.freeApi && (
+                        <Badge variant="secondary" className="text-xs">Gratuit</Badge>
+                      )}
+                      {provider.features.unlimited && (
+                        <Badge variant="secondary" className="text-xs">Illimité</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{provider.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {provider.domains.map((domain) => (
+                      <code
+                        key={domain}
+                        className="text-xs bg-muted px-2 py-0.5 rounded font-mono"
+                      >
+                        @{domain}
+                      </code>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 

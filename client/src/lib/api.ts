@@ -36,6 +36,16 @@ export const api = {
     return response.json();
   },
 
+  // Pre-register email with provider (needed for mail.tm / guerrilla)
+  registerEmail: async (email: string): Promise<{ success: boolean }> => {
+    try {
+      const response = await apiRequest("POST", "/api/email/register", { email });
+      return response.json();
+    } catch {
+      return { success: false };
+    }
+  },
+
   // Email history
   saveEmailToHistory: async (email: string, messageCount?: number): Promise<{ success: boolean }> => {
     const response = await apiRequest("POST", "/api/history", { email, messageCount });

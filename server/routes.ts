@@ -232,6 +232,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pre-register an email address with the provider (needed for mail.tm / guerrilla)
+  app.post("/api/email/register", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: "Email requis" });
+      }
+      await emailService.preRegisterEmail(email);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Pre-register error:", error);
+      res.json({ success: false }); // non-blocking — don't fail the client
+    }
+  });
+
   // Get messages for an email address
   app.get("/api/email/:email", async (req, res) => {
     try {
