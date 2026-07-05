@@ -1,3 +1,2 @@
-- [Zowa DB migration](zowa-db.md) — Supabase replaced with Replit PostgreSQL via pg pool; schema auto-initializes on startup.
-- [Zowa email providers](zowa-providers.md) — homephit.com added as TempMail provider (MD5 hash API); 1SecMail properly implemented; devtai is default fallback.
-- [Zowa bot domain](zowa-bot-domain.md) — bot uses session.preferredDomain for all email generation; domain picker added to /settings.
+- [Email providers setup](email-providers.md) — Dead providers removed; DevTai+Guerrilla+mail.tm are the 3 working providers; deterministic mail.tm password derived from email hash.
+- [Bot antdev.org migration](bot-domain.md) — All hardcoded antdev.org replaced with epmtyfl.me/getAllDomains()[0]; email validation regex now accepts any supported domain.
