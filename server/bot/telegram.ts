@@ -270,7 +270,7 @@ class TelegramBotService {
 
     this.bot.action('refresh', async (ctx) => {
       await ctx.answerCbQuery('🔄 Actualisation...');
-      await this.refreshAndNotifyNewMessages(ctx);
+      await this.manualRefresh(ctx);
     });
 
     this.bot.action('create_email', async (ctx) => {
@@ -1414,6 +1414,87 @@ class TelegramBotService {
       clearInterval(this.autoRefreshInterval);
       this.autoRefreshInterval = null;
       console.log('🛑 [TELEGRAM] Auto-refresh stopped');
+    }
+  }
+
+  /**
+   * manualRefresh — appelé quand l'utilisateur appuie sur 🔄 manuellement.
+   * Bypass le cache, montre TOUS les messages actuels (pas seulement les nouveaux).
+   * Remet à zéro le tracker "vu" pour que l'auto-refresh reparte proprement.
+   */
+  private async manualRefresh(ctx: BotContext) {
+    if (!ctx.chat) return;
+
+    const session = this.sessions.get(ctx.chat.id);
+    const lang = session?.language || 'fr';
+    const emailToCheck = this.getActiveEmail(session);
+
+    if (!emailToCheck) {
+      const msg = lang === 'fr'
+        ? '📧 Veuillez d\'abord générer un email.'
+        : '📧 Please generate an email first.';
+      await ctx.reply(msg);
+      return;
+    }
+
+    // Bypass cache — on veut les vraies données fraîches
+    const messages = await emailService.getMessages(emailToCheck, true);
+
+    // Réinitialise le tracker "vu" → l'auto-refresh pourra re-notifier
+    if (!session.lastCheckedMessages) session.lastCheckedMessages = new Map();
+    session.lastCheckedMessages.set(emailToCheck, messages.map(m => m.id));
+
+    if (messages.length === 0) {
+      const msg = lang === 'fr'
+        ? `📭 *Inbox: ${emailToCheck}*\n\nAucun message reçu.`
+        : `📭 *Inbox: ${emailToCheck}*\n\nNo messages received.`;
+      await ctx.reply(msg, {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([[Markup.button.callback('🔄', 'refresh')]])
+      });
+      return;
+    }
+
+    // Affiche tous les messages
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US');
+    const timeStr = now.toLocaleTimeString(lang === 'fr' ? 'fr-FR' : 'en-US');
+
+    const header = lang === 'fr'
+      ? `📬 *Inbox: ${emailToCheck}*\n📊 ${messages.length} message(s)\n📅 ${dateStr} ${timeStr}\n━━━━━━━━━━━━━━━`
+      : `📬 *Inbox: ${emailToCheck}*\n📊 ${messages.length} message(s)\n📅 ${dateStr} ${timeStr}\n━━━━━━━━━━━━━━━`;
+    await ctx.reply(header, { parse_mode: 'Markdown' });
+
+    for (const m of messages.slice(0, 5)) {
+      const fullMessage = await emailService.getMessageDetails(m.id);
+      const content = fullMessage?.textContent
+        ? fullMessage.textContent.substring(0, 300).replace(/\s+/g, ' ').trim()
+        : (fullMessage?.htmlContent
+            ? fullMessage.htmlContent.replace(/<[^>]+>/g, '').substring(0, 300).trim()
+            : '');
+      const timeAgo = this.formatTimeAgo(m.createdAt, lang);
+      const bodyLine = content ? `\n\n${content}${content.length >= 300 ? '…' : ''}` : '';
+
+      const text = lang === 'fr'
+        ? `📧 *De:* ${m.fromAddress}\n📝 *Sujet:* ${m.subject}\n🕐 ${timeAgo}${bodyLine}`
+        : `📧 *From:* ${m.fromAddress}\n📝 *Subject:* ${m.subject}\n🕐 ${timeAgo}${bodyLine}`;
+
+      const validationLinks = fullMessage ? emailService.extractLinksFromMessage(fullMessage) : [];
+
+      const buttons = validationLinks.length > 0
+        ? [[
+            Markup.button.callback(lang === 'fr' ? '📖 Voir' : '📖 View', `view_message_${m.id}`),
+            Markup.button.url(lang === 'fr' ? '🔗 Lien' : '🔗 Link', validationLinks[0])
+          ]]
+        : [[Markup.button.callback(lang === 'fr' ? '📖 Voir' : '📖 View', `view_message_${m.id}`)]];
+
+      await ctx.reply(text, { parse_mode: 'Markdown', ...Markup.inlineKeyboard(buttons) });
+    }
+
+    if (messages.length > 5) {
+      await ctx.reply(
+        lang === 'fr' ? `… et ${messages.length - 5} autre(s) message(s).` : `… and ${messages.length - 5} more message(s).`
+      );
     }
   }
 
