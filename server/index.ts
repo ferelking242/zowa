@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { telegramService } from "./bot";
 import { keepAliveService } from "./services/keepAliveService";
+import { initSchema } from "./lib/db";
 
 const app = express();
 
@@ -50,6 +51,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize local PostgreSQL schema on startup
+  await initSchema();
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

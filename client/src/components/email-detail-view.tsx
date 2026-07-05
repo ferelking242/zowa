@@ -27,7 +27,6 @@ import {
   SiTelegram, 
   SiGithub, 
   SiDiscord, 
-  SiLinkedin, 
   SiX, 
   SiStripe, 
   SiVercel 
@@ -55,7 +54,7 @@ export function EmailDetailView({ message, onDelete, onClose }: EmailDetailViewP
       'SiTelegram': SiTelegram,
       'SiGithub': SiGithub,
       'SiDiscord': SiDiscord,
-      'SiLinkedin': SiLinkedin,
+      'SiLinkedin': LinkIcon,
       'SiX': SiX,
       'SiMicrosoft': LinkIcon,
       'SiStripe': SiStripe,

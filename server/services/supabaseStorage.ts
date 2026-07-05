@@ -1,555 +1,322 @@
-import { supabase } from '../lib/supabase';
-import { 
-  type LinkValidation, 
-  type InsertLinkValidation, 
-  type User, 
+/**
+ * Storage service — backed by Replit PostgreSQL (via pg pool).
+ * Drop-in replacement for the old Supabase-based storage.
+ */
+import { query, queryOne } from '../lib/db';
+import {
+  type LinkValidation,
+  type InsertLinkValidation,
+  type User,
   type InsertUser,
   type ReplitAccount,
   type InsertReplitAccount,
   type Cookie,
-  type InsertCookie
+  type InsertCookie,
 } from '@shared/schema';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 export class SupabaseStorage {
+  // ─── Link Validations ────────────────────────────────────────────────────
   async createLinkValidation(data: InsertLinkValidation): Promise<LinkValidation> {
-    const validation = {
-      inbox_id: data.inboxId,
-      url: data.url,
-      method: data.method,
-      status: 'pending' as const,
-      link_type: data.linkType || null,
-    };
-
-    const { data: result, error } = await supabase
-      .from('link_validations')
-      .insert(validation)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating link validation:', error);
-      throw new Error(`Failed to create link validation: ${error.message}`);
-    }
-
-    return this.mapDbToLinkValidation(result);
+    const row = await queryOne<any>(
+      `INSERT INTO link_validations (inbox_id, url, method, status, link_type)
+       VALUES ($1, $2, $3, 'pending', $4)
+       ON CONFLICT (inbox_id) DO UPDATE SET url = EXCLUDED.url
+       RETURNING *`,
+      [data.inboxId, data.url, data.method, data.linkType ? JSON.stringify(data.linkType) : null]
+    );
+    if (!row) throw new Error('Failed to create link validation');
+    return this.mapDbToLinkValidation(row);
   }
 
   async getLinkValidation(inboxId: string): Promise<LinkValidation | null> {
-    const { data, error } = await supabase
-      .from('link_validations')
-      .select('*')
-      .eq('inbox_id', inboxId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error getting link validation:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToLinkValidation(data) : null;
+    const row = await queryOne<any>(
+      `SELECT * FROM link_validations WHERE inbox_id = $1`,
+      [inboxId]
+    );
+    return row ? this.mapDbToLinkValidation(row) : null;
   }
 
-  async updateLinkValidation(
-    inboxId: string,
-    updates: Partial<LinkValidation>
-  ): Promise<LinkValidation> {
-    const existing = await this.getLinkValidation(inboxId);
+  async updateLinkValidation(inboxId: string, updates: Partial<LinkValidation>): Promise<LinkValidation> {
+    const sets: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
 
-    if (!existing) {
-      console.error('Cannot update non-existent validation for inboxId:', inboxId);
-      throw new Error('Validation record not found');
-    }
+    if (updates.status !== undefined)     { sets.push(`status = $${idx++}`);       params.push(updates.status); }
+    if (updates.validatedAt !== undefined) { sets.push(`validated_at = $${idx++}`); params.push(updates.validatedAt); }
+    if (updates.linkType !== undefined)   { sets.push(`link_type = $${idx++}`);    params.push(JSON.stringify(updates.linkType)); }
 
-    const dbUpdates: any = {};
+    if (sets.length === 0) return (await this.getLinkValidation(inboxId))!;
 
-    if (updates.status) dbUpdates.status = updates.status;
-    if (updates.validatedAt !== undefined) dbUpdates.validated_at = updates.validatedAt;
-    if (updates.linkType !== undefined) dbUpdates.link_type = updates.linkType;
-
-    const { data, error } = await supabase
-      .from('link_validations')
-      .update(dbUpdates)
-      .eq('inbox_id', inboxId)
-      .select()
-      .maybeSingle();
-
-    if (error || !data) {
-      console.error('Error updating link validation:', error);
-      throw new Error(`Failed to update link validation: ${error?.message || 'No data returned'}`);
-    }
-
-    return this.mapDbToLinkValidation(data);
+    params.push(inboxId);
+    const row = await queryOne<any>(
+      `UPDATE link_validations SET ${sets.join(', ')} WHERE inbox_id = $${idx} RETURNING *`,
+      params
+    );
+    if (!row) throw new Error('Validation record not found');
+    return this.mapDbToLinkValidation(row);
   }
 
+  private mapDbToLinkValidation(r: any): LinkValidation {
+    return {
+      inboxId: r.inbox_id,
+      url: r.url,
+      status: r.status,
+      method: r.method,
+      validatedAt: r.validated_at ?? undefined,
+      linkType: r.link_type ?? undefined,
+    };
+  }
+
+  // ─── Email History ────────────────────────────────────────────────────────
   async saveEmailToHistory(email: string, userId?: string, messageCount?: number): Promise<void> {
-    const { error } = await supabase
-      .from('email_history')
-      .upsert({
-        email,
-        user_id: userId || null,
-        last_checked: new Date().toISOString(),
-        message_count: messageCount || 0,
-        has_validated_links: false
-      }, {
-        onConflict: 'email'
-      });
-
-    if (error) {
-      console.error('Error saving email to history:', error);
-    }
+    await query(
+      `INSERT INTO email_history (email, user_id, last_checked, message_count, has_validated_links)
+       VALUES ($1, $2, NOW(), $3, FALSE)
+       ON CONFLICT (email) DO UPDATE
+         SET last_checked = NOW(), message_count = EXCLUDED.message_count`,
+      [email, userId ?? null, messageCount ?? 0]
+    );
   }
 
   async getEmailHistory(userId?: string): Promise<Array<{
-    email: string;
-    lastChecked: string;
-    messageCount: number;
-    hasValidatedLinks: boolean;
-    validationStatus: string | null;
-    createdAt: string;
+    email: string; lastChecked: string; messageCount: number;
+    hasValidatedLinks: boolean; validationStatus: string | null; createdAt: string;
   }>> {
-    let query = supabase
-      .from('email_history')
-      .select('email, last_checked, message_count, has_validated_links, validation_status, created_at')
-      .order('last_checked', { ascending: false });
+    const rows = userId
+      ? await query(`SELECT * FROM email_history WHERE user_id = $1 ORDER BY last_checked DESC`, [userId])
+      : await query(`SELECT * FROM email_history ORDER BY last_checked DESC`);
 
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error getting email history:', error);
-      return [];
-    }
-
-    return (data || []).map(item => ({
-      email: item.email,
-      lastChecked: item.last_checked,
-      messageCount: item.message_count || 0,
-      hasValidatedLinks: item.has_validated_links || false,
-      validationStatus: item.validation_status,
-      createdAt: item.created_at,
+    return rows.map(r => ({
+      email: r.email,
+      lastChecked: r.last_checked instanceof Date ? r.last_checked.toISOString() : String(r.last_checked),
+      messageCount: r.message_count ?? 0,
+      hasValidatedLinks: r.has_validated_links ?? false,
+      validationStatus: r.validation_status ?? null,
+      createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
     }));
   }
 
   async updateEmailHistoryMessageCount(email: string, messageCount: number): Promise<void> {
-    const { error } = await supabase
-      .from('email_history')
-      .update({
-        message_count: messageCount,
-        last_checked: new Date().toISOString()
-      })
-      .eq('email', email);
-
-    if (error) {
-      console.error('Error updating email history:', error);
-    }
+    await query(
+      `UPDATE email_history SET message_count = $1, last_checked = NOW() WHERE email = $2`,
+      [messageCount, email]
+    );
   }
 
+  // ─── Users ────────────────────────────────────────────────────────────────
   async createUser(data: Omit<InsertUser, 'passwordHash'> & { password: string }): Promise<User> {
-    console.log(`[AUTH] Creating user with email: ${data.email}`);
+    console.log(`[AUTH] Creating user: ${data.email}`);
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    console.log(`[AUTH] Password hashed successfully`);
-
-    const { data: result, error } = await supabase
-      .from('users')
-      .insert({
-        email: data.email,
-        username: data.username,
-        password_hash: hashedPassword,
-        auto_validate_inbox: true,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`[AUTH] Error creating user:`, error);
-      throw new Error(error.message);
-    }
-
-    console.log(`[AUTH] User created successfully: ${result.email}`);
-    return this.mapDbToUser(result);
+    const row = await queryOne<any>(
+      `INSERT INTO users (email, username, password_hash, auto_validate_inbox)
+       VALUES ($1, $2, $3, TRUE) RETURNING *`,
+      [data.email, data.username, hashedPassword]
+    );
+    if (!row) throw new Error('Failed to create user');
+    console.log(`[AUTH] User created: ${row.email}`);
+    return this.mapDbToUser(row);
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .ilike('email', email)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error getting user by email:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToUser(data) : null;
+    const row = await queryOne<any>(
+      `SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+      [email]
+    );
+    return row ? this.mapDbToUser(row) : null;
   }
 
   async getUserByUsername(username: string): Promise<User | null> {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .ilike('username', username)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error getting user by username:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToUser(data) : null;
-  }
-
-  async updateUserSettings(userId: string, autoValidateInbox: boolean): Promise<User | null> {
-    const { data, error } = await supabase
-      .from('users')
-      .update({ auto_validate_inbox: autoValidateInbox })
-      .eq('id', userId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating user settings:', error);
-      return null;
-    }
-
-    return this.mapDbToUser(data);
+    const row = await queryOne<any>(
+      `SELECT * FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1`,
+      [username]
+    );
+    return row ? this.mapDbToUser(row) : null;
   }
 
   async getUserById(id: string): Promise<User | null> {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const row = await queryOne<any>(`SELECT * FROM users WHERE id = $1`, [id]);
+    return row ? this.mapDbToUser(row) : null;
+  }
 
-    if (error) {
-      console.error('Error getting user by id:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToUser(data) : null;
+  async updateUserSettings(userId: string, autoValidateInbox: boolean): Promise<User | null> {
+    const row = await queryOne<any>(
+      `UPDATE users SET auto_validate_inbox = $1 WHERE id = $2 RETURNING *`,
+      [autoValidateInbox, userId]
+    );
+    return row ? this.mapDbToUser(row) : null;
   }
 
   async verifyPassword(email: string, password: string): Promise<User | null> {
     const user = await this.getUserByEmail(email);
-
-    if (!user) {
-      console.error(`[AUTH] User not found for email: ${email}`);
-      return null;
-    }
-
-    if (!user.passwordHash) {
-      console.error(`[AUTH] No password stored for user: ${email}`);
-      return null;
-    }
-
-    console.log(`[AUTH] Verifying password for user: ${email}`);
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-
-    if (!isValid) {
-      console.error(`[AUTH] Invalid password for user: ${email}`);
-      return null;
-    }
-
-    console.log(`[AUTH] Password verified successfully for user: ${email}`);
-    return this.mapDbToUser(user);
+    if (!user?.passwordHash) return null;
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    return valid ? user : null;
   }
 
-  private mapDbToUser(dbData: any): User {
+  private mapDbToUser(r: any): User {
     return {
-      id: dbData.id,
-      email: dbData.email,
-      username: dbData.username,
-      passwordHash: dbData.password_hash,
-      autoValidateInbox: dbData.auto_validate_inbox ?? true,
-      createdAt: new Date(dbData.created_at).getTime(),
+      id: r.id,
+      email: r.email,
+      username: r.username,
+      passwordHash: r.password_hash,
+      autoValidateInbox: r.auto_validate_inbox ?? true,
+      createdAt: r.created_at instanceof Date ? r.created_at.getTime() : Number(r.created_at),
     };
   }
 
-  private mapDbToLinkValidation(dbData: any): LinkValidation {
-    return {
-      inboxId: dbData.inbox_id,
-      url: dbData.url,
-      status: dbData.status,
-      method: dbData.method,
-      validatedAt: dbData.validated_at || undefined,
-      linkType: dbData.link_type || undefined,
-    };
-  }
-
+  // ─── API Tokens ────────────────────────────────────────────────────────────
   async createApiToken(userId: string, name?: string): Promise<any> {
     const token = `tk_${crypto.randomBytes(32).toString('hex')}`;
-
-    const { data, error } = await supabase
-      .from('api_tokens')
-      .insert({
-        user_id: userId,
-        token,
-        name: name || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating API token:', error);
-      throw new Error(error.message);
-    }
-
-    return {
-      id: data.id,
-      userId: data.user_id,
-      token: data.token,
-      name: data.name,
-      createdAt: new Date(data.created_at).getTime(),
-      lastUsedAt: data.last_used_at ? new Date(data.last_used_at).getTime() : undefined,
-    };
+    const row = await queryOne<any>(
+      `INSERT INTO api_tokens (user_id, token, name) VALUES ($1, $2, $3) RETURNING *`,
+      [userId, token, name ?? null]
+    );
+    if (!row) throw new Error('Failed to create API token');
+    return this.mapDbToToken(row);
   }
 
   async getApiTokensByUserId(userId: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('api_tokens')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error getting API tokens:', error);
-      return [];
-    }
-
-    return (data || []).map(item => ({
-      id: item.id,
-      userId: item.user_id,
-      token: item.token,
-      name: item.name,
-      createdAt: new Date(item.created_at).getTime(),
-      lastUsedAt: item.last_used_at ? new Date(item.last_used_at).getTime() : undefined,
-    }));
+    const rows = await query(
+      `SELECT * FROM api_tokens WHERE user_id = $1 ORDER BY created_at DESC`,
+      [userId]
+    );
+    return rows.map(r => this.mapDbToToken(r));
   }
 
   async deleteApiToken(id: string, userId: string): Promise<boolean> {
-    const { data, error } = await supabase
-      .from('api_tokens')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select('id')
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error deleting API token:', error);
-      return false;
-    }
-
-    return data !== null;
+    const rows = await query(
+      `DELETE FROM api_tokens WHERE id = $1 AND user_id = $2 RETURNING id`,
+      [id, userId]
+    );
+    return rows.length > 0;
   }
 
   async updateTokenLastUsed(token: string): Promise<void> {
-    const { error } = await supabase
-      .from('api_tokens')
-      .update({ last_used_at: new Date().toISOString() })
-      .eq('token', token);
-
-    if (error) {
-      console.error('Error updating token last used:', error);
-    }
+    await query(`UPDATE api_tokens SET last_used_at = NOW() WHERE token = $1`, [token]);
   }
 
+  private mapDbToToken(r: any) {
+    return {
+      id: r.id,
+      userId: r.user_id,
+      token: r.token,
+      name: r.name ?? undefined,
+      createdAt: r.created_at instanceof Date ? r.created_at.getTime() : Number(r.created_at),
+      lastUsedAt: r.last_used_at
+        ? (r.last_used_at instanceof Date ? r.last_used_at.getTime() : Number(r.last_used_at))
+        : undefined,
+    };
+  }
+
+  // ─── Replit Accounts ──────────────────────────────────────────────────────
   async createReplitAccount(data: InsertReplitAccount): Promise<ReplitAccount> {
-    const { data: result, error } = await supabase
-      .from('replit_accounts')
-      .insert({
-        email: data.email,
-        password: data.password,
-        verified: false,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating Replit account:', error);
-      throw new Error(`Failed to create Replit account: ${error.message}`);
-    }
-
-    return this.mapDbToReplitAccount(result);
+    const row = await queryOne<any>(
+      `INSERT INTO replit_accounts (email, password, verified) VALUES ($1, $2, FALSE) RETURNING *`,
+      [data.email, data.password]
+    );
+    if (!row) throw new Error('Failed to create Replit account');
+    return this.mapDbToReplitAccount(row);
   }
 
   async getReplitAccountByEmail(email: string): Promise<ReplitAccount | null> {
-    const { data, error } = await supabase
-      .from('replit_accounts')
-      .select('*')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error getting Replit account by email:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToReplitAccount(data) : null;
+    const row = await queryOne<any>(`SELECT * FROM replit_accounts WHERE email = $1`, [email]);
+    return row ? this.mapDbToReplitAccount(row) : null;
   }
 
   async getReplitAccountById(id: string): Promise<ReplitAccount | null> {
-    const { data, error } = await supabase
-      .from('replit_accounts')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error getting Replit account by id:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToReplitAccount(data) : null;
+    const row = await queryOne<any>(`SELECT * FROM replit_accounts WHERE id = $1`, [id]);
+    return row ? this.mapDbToReplitAccount(row) : null;
   }
 
   async updateReplitAccount(id: string, updates: Partial<ReplitAccount>): Promise<ReplitAccount | null> {
-    const dbUpdates: any = {};
-    
-    if (updates.verified !== undefined) dbUpdates.verified = updates.verified;
-    if (updates.verified && updates.verifiedAt) dbUpdates.verified_at = new Date(updates.verifiedAt).toISOString();
+    const sets: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
 
-    const { data, error } = await supabase
-      .from('replit_accounts')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .maybeSingle();
+    if (updates.verified !== undefined) { sets.push(`verified = $${idx++}`);    params.push(updates.verified); }
+    if (updates.verifiedAt !== undefined) { sets.push(`verified_at = $${idx++}`); params.push(new Date(updates.verifiedAt)); }
 
-    if (error) {
-      console.error('Error updating Replit account:', error);
-      return null;
-    }
-
-    return data ? this.mapDbToReplitAccount(data) : null;
+    if (sets.length === 0) return this.getReplitAccountById(id);
+    params.push(id);
+    const row = await queryOne<any>(
+      `UPDATE replit_accounts SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+      params
+    );
+    return row ? this.mapDbToReplitAccount(row) : null;
   }
 
   async deleteReplitAccount(id: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('replit_accounts')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting Replit account:', error);
-      return false;
-    }
-
+    await query(`DELETE FROM replit_accounts WHERE id = $1`, [id]);
     return true;
   }
 
   async getAllReplitAccounts(): Promise<ReplitAccount[]> {
-    const { data, error } = await supabase
-      .from('replit_accounts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error getting all Replit accounts:', error);
-      return [];
-    }
-
-    return (data || []).map(item => this.mapDbToReplitAccount(item));
+    const rows = await query(`SELECT * FROM replit_accounts ORDER BY created_at DESC`);
+    return rows.map(r => this.mapDbToReplitAccount(r));
   }
 
+  private mapDbToReplitAccount(r: any): ReplitAccount {
+    return {
+      id: r.id,
+      email: r.email,
+      password: r.password,
+      verified: r.verified ?? false,
+      createdAt: r.created_at instanceof Date ? r.created_at.getTime() : Number(r.created_at),
+      verifiedAt: r.verified_at
+        ? (r.verified_at instanceof Date ? r.verified_at.getTime() : Number(r.verified_at))
+        : undefined,
+    };
+  }
+
+  // ─── Cookies ──────────────────────────────────────────────────────────────
   async createCookie(data: InsertCookie): Promise<Cookie> {
-    const { data: result, error } = await supabase
-      .from('cookies')
-      .insert({
-        account_id: data.accountId,
-        name: data.name,
-        value: data.value,
-        domain: data.domain || null,
-        path: data.path || null,
-        expires: data.expires || null,
-        http_only: data.httpOnly || null,
-        secure: data.secure || null,
-        same_site: data.sameSite || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating cookie:', error);
-      throw new Error(`Failed to create cookie: ${error.message}`);
-    }
-
-    return this.mapDbToCookie(result);
+    const row = await queryOne<any>(
+      `INSERT INTO cookies
+         (account_id, name, value, domain, path, expires, http_only, secure, same_site)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [
+        data.accountId, data.name, data.value,
+        data.domain ?? null, data.path ?? null, data.expires ?? null,
+        data.httpOnly ?? null, data.secure ?? null, data.sameSite ?? null,
+      ]
+    );
+    if (!row) throw new Error('Failed to create cookie');
+    return this.mapDbToCookie(row);
   }
 
   async getCookiesByAccountId(accountId: string): Promise<Cookie[]> {
-    const { data, error } = await supabase
-      .from('cookies')
-      .select('*')
-      .eq('account_id', accountId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error getting cookies by account ID:', error);
-      return [];
-    }
-
-    return (data || []).map(item => this.mapDbToCookie(item));
+    const rows = await query(
+      `SELECT * FROM cookies WHERE account_id = $1 ORDER BY created_at DESC`,
+      [accountId]
+    );
+    return rows.map(r => this.mapDbToCookie(r));
   }
 
   async deleteCookie(id: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('cookies')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting cookie:', error);
-      return false;
-    }
-
+    await query(`DELETE FROM cookies WHERE id = $1`, [id]);
     return true;
   }
 
   async deleteCookiesByAccountId(accountId: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('cookies')
-      .delete()
-      .eq('account_id', accountId);
-
-    if (error) {
-      console.error('Error deleting cookies by account ID:', error);
-      return false;
-    }
-
+    await query(`DELETE FROM cookies WHERE account_id = $1`, [accountId]);
     return true;
   }
 
-  private mapDbToReplitAccount(dbData: any): ReplitAccount {
+  private mapDbToCookie(r: any): Cookie {
     return {
-      id: dbData.id,
-      email: dbData.email,
-      password: dbData.password,
-      verified: dbData.verified ?? false,
-      createdAt: new Date(dbData.created_at).getTime(),
-      verifiedAt: dbData.verified_at ? new Date(dbData.verified_at).getTime() : undefined,
-    };
-  }
-
-  private mapDbToCookie(dbData: any): Cookie {
-    return {
-      id: dbData.id,
-      accountId: dbData.account_id,
-      name: dbData.name,
-      value: dbData.value,
-      domain: dbData.domain || undefined,
-      path: dbData.path || undefined,
-      expires: dbData.expires || undefined,
-      httpOnly: dbData.http_only ?? undefined,
-      secure: dbData.secure ?? undefined,
-      sameSite: dbData.same_site || undefined,
-      createdAt: new Date(dbData.created_at).getTime(),
+      id: r.id,
+      accountId: r.account_id,
+      name: r.name,
+      value: r.value,
+      domain: r.domain ?? undefined,
+      path: r.path ?? undefined,
+      expires: r.expires ?? undefined,
+      httpOnly: r.http_only ?? undefined,
+      secure: r.secure ?? undefined,
+      sameSite: r.same_site ?? undefined,
+      createdAt: r.created_at instanceof Date ? r.created_at.getTime() : Number(r.created_at),
     };
   }
 }

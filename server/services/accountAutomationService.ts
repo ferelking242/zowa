@@ -3,7 +3,7 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Browser, Page, BrowserContext } from 'playwright';
 import { nanoid } from 'nanoid';
 import { emailService } from './emailService';
-import { supabase } from '../lib/supabase';
+import { storage } from './supabaseStorage';
 import type { ReplitAccount, Cookie, AutomationTask, AutomationStep } from '@shared/schema';
 import Captcha from '2captcha';
 import * as fs from 'fs';
@@ -1281,43 +1281,33 @@ export class AccountAutomationService {
     try {
       this.addDebugLog(task, '💾 Sauvegarde en base de données...');
 
-      const { data: accountData, error: accountError } = await supabase
-        .from('replit_accounts')
-        .insert({
-          email: task.email,
-          password: task.password!,
-          verified,
-          verified_at: verified ? new Date().toISOString() : null,
-        })
-        .select()
-        .single();
+      const accountData = await storage.createReplitAccount({
+        email: task.email,
+        password: task.password!,
+      });
 
-      if (accountError) {
-        throw new Error(`DB Error: ${accountError.message}`);
+      if (verified) {
+        await storage.updateReplitAccount(accountData.id, {
+          verified: true,
+          verifiedAt: Date.now(),
+        });
       }
 
       if (cookies && cookies.length > 0) {
-        const cookieRecords = cookies.map(cookie => ({
-          account_id: accountData.id,
-          name: cookie.name,
-          value: cookie.value,
-          domain: cookie.domain,
-          path: cookie.path,
-          expires: cookie.expires ? Math.floor(cookie.expires) : null,
-          http_only: cookie.httpOnly || false,
-          secure: cookie.secure || false,
-          same_site: cookie.sameSite || null,
-        }));
-
-        const { error: cookiesError } = await supabase
-          .from('cookies')
-          .insert(cookieRecords);
-
-        if (cookiesError) {
-          console.error('❌ [DB] Failed to save cookies:', cookiesError);
-        } else {
-          this.addDebugLog(task, `✅ ${cookies.length} cookies sauvegardés`);
+        for (const cookie of cookies) {
+          await storage.createCookie({
+            accountId: accountData.id,
+            name: cookie.name,
+            value: cookie.value,
+            domain: cookie.domain ?? undefined,
+            path: cookie.path ?? undefined,
+            expires: cookie.expires ? Math.floor(cookie.expires) : undefined,
+            httpOnly: cookie.httpOnly ?? undefined,
+            secure: cookie.secure ?? undefined,
+            sameSite: cookie.sameSite ?? undefined,
+          });
         }
+        this.addDebugLog(task, `✅ ${cookies.length} cookies sauvegardés`);
       }
 
       this.addDebugLog(task, '✅ Compte sauvegardé en base de données');

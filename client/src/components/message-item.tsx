@@ -14,7 +14,6 @@ import {
   SiTelegram, 
   SiGithub, 
   SiDiscord, 
-  SiLinkedin, 
   SiX, 
   SiStripe, 
   SiVercel 
@@ -37,7 +36,7 @@ export function MessageItem({ message, onDelete, isDeleting }: MessageItemProps)
       'SiTelegram': SiTelegram,
       'SiGithub': SiGithub,
       'SiDiscord': SiDiscord,
-      'SiLinkedin': SiLinkedin,
+      'SiLinkedin': LinkIcon,
       'SiX': SiX,
       'SiMicrosoft': LinkIcon,
       'SiStripe': SiStripe,
