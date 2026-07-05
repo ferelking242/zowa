@@ -87,10 +87,8 @@ export default function Login() {
 
             <div className="text-center text-sm text-muted-foreground">
               Pas encore de compte ?{" "}
-              <Link href="/signup">
-                <a className="text-blue-600 hover:underline" data-testid="link-signup">
-                  S'inscrire
-                </a>
+              <Link href="/signup" className="text-blue-600 hover:underline" data-testid="link-signup">
+                S'inscrire
               </Link>
             </div>
           </form>

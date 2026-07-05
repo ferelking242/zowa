@@ -149,9 +149,9 @@ export default function Settings() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="auto-validate-inbox">Activer pour {user.username}@antdev.org</Label>
+                    <Label htmlFor="auto-validate-inbox">Activer l'auto-validation pour {user.username}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Tous les emails reçus sur vos adresses ({user.username}@, {user.username}0@, etc.) seront automatiquement validés
+                      Tous les emails reçus sur vos adresses temporaires seront automatiquement validés
                     </p>
                   </div>
                   <Switch

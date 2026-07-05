@@ -85,27 +85,27 @@ class TelegramBotService {
       const lang = session?.language || 'fr';
       const isLoggedIn = !!session?.userId;
       
-      const welcomeMessage = lang === 'fr' 
-        ? `📧 *The Official TempMail Bot*\n` +
-          `_From creators of the Legendary and Top#1 temporary email service_\n` +
-          `🌐 https://temp\\-mail\\.org | 🤖 @TempMail\\_org\\_bot\n\n` +
-          `👋 Bienvenue sur TempMail Pro Bot\\!\n\n` +
-          `Je peux vous aider à gérer vos emails temporaires\\.\n\n` +
+      const welcomeMessage = lang === 'fr'
+        ? `📧 <b>The Official TempMail Bot</b>\n` +
+          `<i>From creators of the Legendary and Top#1 temporary email service</i>\n` +
+          `🌐 https://temp-mail.org | 🤖 @TempMail_org_bot\n\n` +
+          `👋 Bienvenue sur TempMail Pro Bot!\n\n` +
+          `Je peux vous aider à gérer vos emails temporaires.\n\n` +
           `📧 Utilisez "Génère nouvel email" pour créer un email\n` +
           `📬 Utilisez "Inbox" pour voir vos messages\n` +
           `👤 Utilisez "Compte" pour vous connecter ou créer un compte\n` +
-          `⚙️ Utilisez "Paramètres" pour configurer le bot \\(domaine, langue…\\)`
-        : `📧 *The Official TempMail Bot*\n` +
-          `_From creators of the Legendary and Top#1 temporary email service_\n` +
-          `🌐 https://temp\\-mail\\.org | 🤖 @TempMail\\_org\\_bot\n\n` +
-          `👋 Welcome to TempMail Pro Bot\\!\n\n` +
-          `I can help you manage your temporary emails\\.\n\n` +
+          `⚙️ Utilisez "Paramètres" pour configurer le bot (domaine, langue…)`
+        : `📧 <b>The Official TempMail Bot</b>\n` +
+          `<i>From creators of the Legendary and Top#1 temporary email service</i>\n` +
+          `🌐 https://temp-mail.org | 🤖 @TempMail_org_bot\n\n` +
+          `👋 Welcome to TempMail Pro Bot!\n\n` +
+          `I can help you manage your temporary emails.\n\n` +
           `📧 Use "Generate new email" to create an email\n` +
           `📬 Use "Inbox" to see your messages\n` +
           `👤 Use "Account" to log in or create an account\n` +
-          `⚙️ Use "Settings" to configure the bot \\(domain, language…\\)`;
+          `⚙️ Use "Settings" to configure the bot (domain, language…)`;
 
-      await ctx.reply(welcomeMessage, { parse_mode: 'MarkdownV2', ...this.getMainKeyboard(lang, isLoggedIn) });
+      await ctx.reply(welcomeMessage, { parse_mode: 'HTML', ...this.getMainKeyboard(lang, isLoggedIn) });
     });
 
     this.bot.command('login', async (ctx) => {
@@ -179,7 +179,7 @@ class TelegramBotService {
           `/logout - Se déconnecter\n` +
           `/help - Afficher cette aide\n\n` +
           `*Fonctionnalités:*\n` +
-          `• Emails numérotés: username0@antdev.org - username1000000@antdev.org\n` +
+          `• Emails numérotés: username0@votre-domaine - username1000000@votre-domaine\n` +
           `• Détection automatique de nouveaux messages (refresh auto 5s)\n` +
           `• Détection et validation automatique de liens\n` +
           `• Gestion d'API tokens\n` +
@@ -199,7 +199,7 @@ class TelegramBotService {
           `/logout - Log out\n` +
           `/help - Show this help\n\n` +
           `*Features:*\n` +
-          `• Numbered emails: username0@antdev.org - username1000000@antdev.org\n` +
+          `• Numbered emails: username0@your-domain - username1000000@your-domain\n` +
           `• Automatic new message detection (auto-refresh 5s)\n` +
           `• Automatic validation link detection and validation\n` +
           `• API token management\n` +

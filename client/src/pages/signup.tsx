@@ -138,10 +138,8 @@ export default function Signup() {
 
             <div className="text-center text-sm text-muted-foreground">
               Vous avez déjà un compte ?{" "}
-              <Link href="/login">
-                <a className="text-blue-600 hover:underline" data-testid="link-login">
-                  Se connecter
-                </a>
+              <Link href="/login" className="text-blue-600 hover:underline" data-testid="link-login">
+                Se connecter
               </Link>
             </div>
           </form>

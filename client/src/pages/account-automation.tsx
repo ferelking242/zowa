@@ -19,7 +19,7 @@ import type { AutomationTask, Screenshot } from '@shared/schema';
 export default function AccountAutomation() {
   const { t } = useTranslation();
   const [selectedProvider, setSelectedProvider] = useState<'replit' | null>('replit');
-  const [email, setEmail] = useState('username@antdev.org');
+  const [email, setEmail] = useState('username@homephit.com');
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -70,11 +70,20 @@ export default function AccountAutomation() {
   const startAutomation = useMutation({
     mutationFn: async (data: { email: string }) => {
       const response = await apiRequest('POST', '/api/automation/replit', data);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
       return await response.json();
     },
     onSuccess: (data: { taskId: string }) => {
       setCurrentTaskId(data.taskId);
       queryClient.invalidateQueries({ queryKey: ['/api/automation/tasks'] });
+    },
+    onError: (error: Error) => {
+      import('sonner').then(({ toast }) => {
+        toast.error("Erreur d'automatisation", { description: error.message });
+      });
     },
   });
 
@@ -222,7 +231,7 @@ export default function AccountAutomation() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="username@antdev.org"
+                  placeholder="username@homephit.com"
                   data-testid="input-email"
                   className="font-mono text-sm"
                 />
